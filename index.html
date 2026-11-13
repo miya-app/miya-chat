@@ -46,6 +46,18 @@
       box-shadow: 0 8px 24px rgba(0,0,0,0.28); max-height: 86vh; display: flex; flex-direction: column; overflow-y: auto;
     }
 
+    /* 画像拡大ライトボックス */
+    .img-lightbox {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.92); z-index: 60;
+      display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 16px;
+    }
+    .img-lightbox.hidden { display: none; }
+    .img-lightbox img { max-width: 100%; max-height: 82vh; object-fit: contain; border-radius: 8px; }
+    .lightbox-close {
+      position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,0.22);
+      color: #fff; border: none; padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer;
+    }
+
     /* プロフィール画像設定 */
     .avatar-upload-wrap { position: relative; width: 84px; height: 84px; margin: 0 auto 10px; cursor: pointer; }
     .avatar-preview {
@@ -83,6 +95,10 @@
     }
     .danger-btn {
       background: #fee2e2; color: #dc2626; border: 1px solid #fecaca;
+      padding: 5px 9px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;
+    }
+    .edit-mini-btn {
+      background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;
       padding: 5px 9px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;
     }
     .x-open-btn {
@@ -162,8 +178,8 @@
 
     /* メディア・ファイル表示 */
     .media-block { margin-top: 6px; margin-bottom: 6px; }
-    .chat-media { max-width: 210px; max-height: 230px; border-radius: 12px; display: block; background: #000; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-    .board-media { width: 100%; max-height: 240px; border-radius: 10px; display: block; background: #000; object-fit: contain; }
+    .chat-media { max-width: 210px; max-height: 230px; border-radius: 12px; display: block; background: #000; box-shadow: 0 2px 6px rgba(0,0,0,0.2); cursor: zoom-in; }
+    .board-media { width: 100%; max-height: 240px; border-radius: 10px; display: block; background: #0f172a; object-fit: contain; cursor: zoom-in; }
     .file-card {
       background: #fff; border: 1px solid #cbd5e1; border-radius: 10px; padding: 9px 12px;
       display: flex; align-items: center; gap: 10px; max-width: 100%; text-decoration: none; color: #1e293b;
@@ -197,6 +213,7 @@
     .card { background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 10px; }
     .card-title { font-size: 15px; font-weight: bold; color: #0f172a; margin-bottom: 4px; }
     .card-body { font-size: 13px; color: #334155; line-height: 1.5; white-space: pre-wrap; margin-bottom: 8px; }
+    .card-actions-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; gap: 6px; }
     .attach-bar { display: flex; gap: 6px; margin-bottom: 8px; }
     .attach-mini-btn {
       flex: 1; padding: 7px 4px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px;
@@ -263,6 +280,12 @@
 <body>
 
 <div class="app-container">
+  <!-- 画像拡大表示ライトボックス -->
+  <div class="img-lightbox hidden" id="imgLightbox" onclick="closeImageViewer()">
+    <button class="lightbox-close" onclick="closeImageViewer()">× 閉じる</button>
+    <img id="lightboxImgEl" src="" alt="拡大画像" onclick="event.stopPropagation()" />
+  </div>
+
   <!-- 1. 初回入室・プロフィール設定画面 -->
   <div class="full-screen" id="joinScreen" style="justify-content:center; padding:24px; text-align:center;">
     <div style="font-size: 19px; font-weight: bold; color: #0f172a; margin-bottom: 4px;">みやチャット参加設定</div>
@@ -295,7 +318,7 @@
     <button id="joinBtn" class="primary-btn">トークに参加する</button>
   </div>
 
-  <!-- 2. 【別画面】自分のプロフィール編集画面（名前・アイコン・X表示/非表示） -->
+  <!-- 2. 自分のプロフィール編集画面 -->
   <div class="full-screen hidden" id="myProfileEditScreen">
     <div class="screen-header">
       <span>👤 プロフィール設定</span>
@@ -331,7 +354,79 @@
     </div>
   </div>
 
-  <!-- 3. 管理画面パスワード認証モーダル -->
+  <!-- 3. ノート編集モーダル（作成者・管理人専用） -->
+  <div class="modal-overlay hidden" id="editNoteModal">
+    <div class="modal-box">
+      <div style="font-size:16px; font-weight:bold; color:#0f172a; margin-bottom:10px;">✏️ ノートを編集</div>
+      <label class="field-label">タイトル</label>
+      <input type="text" id="editNoteTitleInput" class="text-input" />
+      <label class="field-label">本文</label>
+      <textarea id="editNoteBodyInput" class="textarea-input" rows="3"></textarea>
+
+      <input type="file" id="editNoteImgInput" accept="image/*" style="display:none;" />
+      <input type="file" id="editNoteVidInput" accept="video/*" style="display:none;" />
+      <input type="file" id="editNoteFileInput" style="display:none;" />
+      <div class="attach-bar">
+        <button type="button" id="editNoteImgBtn" class="attach-mini-btn">📷 画像変更</button>
+        <button type="button" id="editNoteVidBtn" class="attach-mini-btn">🎬 動画変更</button>
+        <button type="button" id="editNoteFileBtn" class="attach-mini-btn">📎 ファイル変更</button>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span id="editNoteAttachStatus" style="font-size:11px; color:#06c755; font-weight:bold;"></span>
+        <button type="button" id="clearEditNoteAttachBtn" class="danger-btn" style="display:none;">添付を削除</button>
+      </div>
+
+      <button id="saveEditedNoteBtn" class="primary-btn">編集を保存する</button>
+      <button id="closeEditNoteBtn" class="secondary-btn">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- 4. イベント編集モーダル（作成者・管理人専用） -->
+  <div class="modal-overlay hidden" id="editEventModal">
+    <div class="modal-box">
+      <div style="font-size:16px; font-weight:bold; color:#0f172a; margin-bottom:10px;">✏️ イベントを編集</div>
+      <label class="field-label">イベント名（必須）</label>
+      <input type="text" id="editEvTitleInput" class="text-input" />
+      <label class="field-label">開催日（必須）</label>
+      <input type="date" id="editEvDateOnlyInput" class="text-input" />
+      <label class="field-label">開始時間 〜 終了時間</label>
+      <div class="time-row">
+        <input type="time" id="editEvStartTimeInput" class="text-input" />
+        <span style="font-size:13px; font-weight:bold; color:#64748b;">〜</span>
+        <input type="time" id="editEvEndTimeInput" class="text-input" />
+      </div>
+      <div style="display:flex; gap:8px;">
+        <div style="flex:1;">
+          <label class="field-label">🚪 開場時間</label>
+          <input type="time" id="editEvOpenTimeInput" class="text-input" />
+        </div>
+        <div style="flex:1.4;">
+          <label class="field-label">📍 場所</label>
+          <input type="text" id="editEvLocationInput" class="text-input" />
+        </div>
+      </div>
+      <label class="field-label">詳細メモ</label>
+      <textarea id="editEvDescInput" class="textarea-input" rows="2"></textarea>
+
+      <input type="file" id="editEvImgInput" accept="image/*" style="display:none;" />
+      <input type="file" id="editEvVidInput" accept="video/*" style="display:none;" />
+      <input type="file" id="editEvFileInput" style="display:none;" />
+      <div class="attach-bar">
+        <button type="button" id="editEvImgBtn" class="attach-mini-btn">📷 画像変更</button>
+        <button type="button" id="editEvVidBtn" class="attach-mini-btn">🎬 動画変更</button>
+        <button type="button" id="editEvFileBtn" class="attach-mini-btn">📎 ファイル変更</button>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span id="editEvAttachStatus" style="font-size:11px; color:#06c755; font-weight:bold;"></span>
+        <button type="button" id="clearEditEvAttachBtn" class="danger-btn" style="display:none;">添付を削除</button>
+      </div>
+
+      <button id="saveEditedEventBtn" class="primary-btn">編集を保存する</button>
+      <button id="closeEditEventBtn" class="secondary-btn">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- 5. 管理画面パスワード認証モーダル -->
   <div class="modal-overlay hidden" id="adminAuthModal">
     <div class="modal-box" style="text-align: center;">
       <div style="font-size: 30px; margin-bottom: 6px;">🔐</div>
@@ -346,7 +441,7 @@
     </div>
   </div>
 
-  <!-- 4. 【別画面】管理人専用・コントロールパネル画面 -->
+  <!-- 6. 管理人専用コントロール画面 -->
   <div class="full-screen hidden" id="adminDashboardScreen">
     <div class="screen-header">
       <span>⚙️ 管理人専用コントロール画面</span>
@@ -404,7 +499,7 @@
     </div>
   </div>
 
-  <!-- 5. 【別画面】一般メンバー用・管理人許可確認＆グループ作成画面 -->
+  <!-- 7. 一般メンバー用グループ作成画面 -->
   <div class="full-screen hidden" id="createGroupScreen">
     <div class="screen-header">
       <span>💬 新しいグループを作成</span>
@@ -440,7 +535,7 @@
     </div>
   </div>
 
-  <!-- 6. イベント詳細モーダル -->
+  <!-- 8. イベント詳細モーダル -->
   <div class="modal-overlay hidden" id="eventDetailModal">
     <div class="modal-box">
       <div style="font-size: 12px; color: #06c755; font-weight: bold;" id="evDetailDate">📅 2026-11-20</div>
@@ -450,11 +545,12 @@
       <div id="evDetailAttachArea" style="margin-bottom: 10px;"></div>
       <div style="font-size: 12px; font-weight: bold; color: #0f172a; margin-bottom: 4px;">👥 出欠状況</div>
       <div id="evDetailMembers" class="participant-box" style="margin-top: 0; margin-bottom: 10px;"></div>
+      <div id="evDetailOwnerActions" style="display:none; gap:8px; margin-top:4px;"></div>
       <button id="closeEvDetailBtn" class="secondary-btn">閉じる</button>
     </div>
   </div>
 
-  <!-- 7. プロフィール＆Xアカウントジャンプモーダル -->
+  <!-- 9. プロフィール＆Xアカウントジャンプモーダル -->
   <div class="modal-overlay hidden" id="userProfileModal">
     <div class="modal-box" style="text-align: center; align-items: center;">
       <div class="avatar-preview" id="profileModalAvatar" style="width: 72px; height: 72px; margin-bottom: 10px;">🐱</div>
@@ -466,7 +562,7 @@
     </div>
   </div>
 
-  <!-- 8. ルーム（グループ）一覧ドロワー -->
+  <!-- 10. ルーム一覧ドロワー -->
   <div class="drawer-overlay" id="drawerOverlay"></div>
   <div class="room-drawer" id="roomDrawer">
     <div style="background:#222e42; color:#fff; padding:14px 16px; font-weight:bold; display:flex; justify-content:space-between; align-items:center;">
@@ -542,7 +638,7 @@
     </div>
   </div>
 
-  <!-- タブ3：カレンダー＆イベント（日付＋開始〜終了時間＋開場時間＋場所入力対応） -->
+  <!-- タブ3：カレンダー＆イベント -->
   <div class="tab-pane hidden" id="tab-event">
     <div class="board-area">
       <div class="card">
@@ -607,7 +703,7 @@
 
 <script>
   const NG_WORDS = ['バカ', 'アホ', '死ね', '荒らし', 'LINE交換', '出会い'];
-  const STORAGE_KEY = 'miyachat_v7';
+  const STORAGE_KEY = 'miyachat_v8';
 
   function getInitialState() {
     return {
@@ -646,6 +742,12 @@
   let selectedDateFilter = null;
   let pendingNoteAttach = null;
   let pendingEvAttach = null;
+
+  // 編集中のノート・イベント一時状態
+  let editingNoteId = null;
+  let editingNoteAttach = null;
+  let editingEventId = null;
+  let editingEventAttach = null;
 
   const urlParams = new URLSearchParams(window.location.search);
   const invitedRoomId = urlParams.get('room');
@@ -705,6 +807,16 @@
     return m ? m.role : 'member';
   }
 
+  // 作成者本人または管理人・共同管理人かどうかを判定
+  function canManageItem(room, authorId, authorName) {
+    if (!state.currentUser) return false;
+    const role = getMyRoleInRoom(room);
+    if (role === 'admin' || role === 'co-admin') return true;
+    if (authorId && authorId === state.currentUser.id) return true;
+    if (!authorId && authorName && authorName === state.currentUser.name) return true;
+    return false;
+  }
+
   function getRoleBadge(role) {
     if (role === 'admin') return '<span class="role-badge">👑 管理人</span>';
     if (role === 'co-admin') return '<span class="role-badge">🛡️ 共同管理人</span>';
@@ -753,7 +865,6 @@
     reader.readAsDataURL(file);
   }
 
-  // イベントの日付と時間表示用ヘルパー
   function getEventDateOnly(ev) {
     return ev.dateOnly || (ev.date ? ev.date.split('T')[0] : '');
   }
@@ -764,6 +875,17 @@
     if (ev.date && ev.date.includes('T')) return ev.date.split('T')[1];
     return '';
   }
+
+  // 画像全画面拡大ビューアー
+  window.openImageViewer = (src) => {
+    if (!src) return;
+    document.getElementById('lightboxImgEl').src = src;
+    document.getElementById('imgLightbox').classList.remove('hidden');
+  };
+  window.closeImageViewer = () => {
+    document.getElementById('imgLightbox').classList.add('hidden');
+    document.getElementById('lightboxImgEl').src = '';
+  };
 
   // ==========================================
   // 初回入室画面
@@ -913,6 +1035,7 @@
       if (oldName !== newName) {
         r.notes.forEach(n => { if (n.author === oldName) n.author = newName; });
         r.events.forEach(ev => {
+          if (ev.author === oldName) ev.author = newName;
           ev.going = ev.going.map(x => x === oldName ? newName : x);
           ev.maybe = ev.maybe.map(x => x === oldName ? newName : x);
           ev.notGoing = ev.notGoing.map(x => x === oldName ? newName : x);
@@ -1206,12 +1329,16 @@
   });
 
   // ==========================================
-  // 共通添付レンダリング
+  // 共通添付レンダリング（画像タップで全画面拡大表示対応）
   // ==========================================
   function renderAttachmentHtml(type, data, name, size) {
     if (!type || !data) return '';
     if (type === 'image') {
-      return `<div class="media-block"><img src="${data}" class="board-media" /></div>`;
+      return `
+        <div class="media-block">
+          <img src="${data}" class="board-media" onclick="openImageViewer('${data}')" title="タップで拡大" />
+          <div style="font-size:10px; color:#64748b; text-align:right; margin-top:2px;">🔍 タップで拡大表示</div>
+        </div>`;
     }
     if (type === 'video') {
       return `<div class="media-block"><video src="${data}" controls playsinline class="board-media"></video></div>`;
@@ -1266,7 +1393,7 @@
   });
 
   // ==========================================
-  // トーク機能
+  // トーク機能（画像タップ拡大対応）
   // ==========================================
   function renderMessages(room) {
     const chatArea = document.getElementById('chatArea');
@@ -1289,7 +1416,7 @@
 
         let bodyHtml = '';
         if (m.mediaType === 'image') {
-          bodyHtml = `<img src="${m.mediaData}" class="chat-media" />`;
+          bodyHtml = `<img src="${m.mediaData}" class="chat-media" onclick="openImageViewer('${m.mediaData}')" />`;
         } else if (m.mediaType === 'video') {
           bodyHtml = `<video src="${m.mediaData}" controls playsinline class="chat-media"></video>`;
         } else if (m.mediaType === 'file') {
@@ -1442,7 +1569,7 @@
   });
 
   // ==========================================
-  // ノート（画像・動画・ファイル対応）
+  // ノート（作成者・管理人のみ編集・削除可能＋画像表示）
   // ==========================================
   document.getElementById('noteAttachImgBtn').addEventListener('click', () => document.getElementById('noteImgInput').click());
   document.getElementById('noteImgInput').addEventListener('change', (e) => {
@@ -1480,21 +1607,113 @@
       const card = document.createElement('div');
       card.className = 'card';
       const mediaHtml = renderAttachmentHtml(n.attachType, n.attachData, n.attachName, n.attachSize);
+      const allowed = canManageItem(room, n.authorId, n.author);
+      const ownerBtns = allowed ? `
+        <div style="display:flex; gap:5px;">
+          <button class="edit-mini-btn" onclick="openEditNoteModal('${n.id}')">✏️ 編集</button>
+          <button class="danger-btn" onclick="deleteNote('${n.id}')">🗑️ 削除</button>
+        </div>` : '';
+
       card.innerHTML = `
         <div style="font-size:11px; color:#64748b; margin-bottom:4px;">投稿者: ${escapeHtml(n.author)}</div>
         <div class="card-title">${escapeHtml(n.title)}</div>
         <div class="card-body">${escapeHtml(n.body)}</div>
         ${mediaHtml}
-        <button onclick="likeNote('${n.id}')" style="background:#f1f5f9; border:none; padding:5px 10px; border-radius:6px; font-size:12px; cursor:pointer;">👍 いいね (${n.likes})</button>
+        <div class="card-actions-bar">
+          <button onclick="likeNote('${n.id}')" style="background:#f1f5f9; border:none; padding:5px 10px; border-radius:6px; font-size:12px; cursor:pointer;">👍 いいね (${n.likes})</button>
+          ${ownerBtns}
+        </div>
       `;
       list.appendChild(card);
     });
   }
+
   window.likeNote = (id) => {
     const room = getCurrentRoom();
     const note = room.notes.find(n => n.id === id);
     if (note) { note.likes++; save(); renderNotes(room); }
   };
+
+  window.deleteNote = (id) => {
+    const room = getCurrentRoom();
+    const note = room.notes.find(n => n.id === id);
+    if (!note || !canManageItem(room, note.authorId, note.author)) return alert('削除権限がありません');
+    if (!confirm(`ノート「${note.title}」を削除しますか？`)) return;
+    room.notes = room.notes.filter(n => n.id !== id);
+    save();
+    renderNotes(room);
+  };
+
+  window.openEditNoteModal = (id) => {
+    const room = getCurrentRoom();
+    const note = room.notes.find(n => n.id === id);
+    if (!note || !canManageItem(room, note.authorId, note.author)) return alert('編集権限がありません');
+
+    editingNoteId = id;
+    document.getElementById('editNoteTitleInput').value = note.title;
+    document.getElementById('editNoteBodyInput').value = note.body;
+    editingNoteAttach = note.attachType ? {
+      type: note.attachType, data: note.attachData, name: note.attachName, size: note.attachSize
+    } : null;
+    updateEditNoteAttachUI();
+    document.getElementById('editNoteModal').classList.remove('hidden');
+  };
+
+  function updateEditNoteAttachUI() {
+    const st = document.getElementById('editNoteAttachStatus');
+    const clr = document.getElementById('clearEditNoteAttachBtn');
+    if (editingNoteAttach) {
+      st.textContent = `📎 ${editingNoteAttach.name} (${editingNoteAttach.size})`;
+      clr.style.display = 'inline-block';
+    } else {
+      st.textContent = '添付ファイルなし';
+      clr.style.display = 'none';
+    }
+  }
+  document.getElementById('clearEditNoteAttachBtn').addEventListener('click', () => {
+    editingNoteAttach = null;
+    updateEditNoteAttachUI();
+  });
+  document.getElementById('editNoteImgBtn').addEventListener('click', () => document.getElementById('editNoteImgInput').click());
+  document.getElementById('editNoteImgInput').addEventListener('change', (e) => {
+    readAttachFile(e.target.files[0], 'image', (res) => { editingNoteAttach = res; updateEditNoteAttachUI(); });
+    e.target.value = '';
+  });
+  document.getElementById('editNoteVidBtn').addEventListener('click', () => document.getElementById('editNoteVidInput').click());
+  document.getElementById('editNoteVidInput').addEventListener('change', (e) => {
+    readAttachFile(e.target.files[0], 'video', (res) => { editingNoteAttach = res; updateEditNoteAttachUI(); });
+    e.target.value = '';
+  });
+  document.getElementById('editNoteFileBtn').addEventListener('click', () => document.getElementById('editNoteFileInput').click());
+  document.getElementById('editNoteFileInput').addEventListener('change', (e) => {
+    readAttachFile(e.target.files[0], 'file', (res) => { editingNoteAttach = res; updateEditNoteAttachUI(); });
+    e.target.value = '';
+  });
+
+  document.getElementById('saveEditedNoteBtn').addEventListener('click', () => {
+    const room = getCurrentRoom();
+    const note = room.notes.find(n => n.id === editingNoteId);
+    if (!note || !canManageItem(room, note.authorId, note.author)) return;
+
+    const title = document.getElementById('editNoteTitleInput').value.trim();
+    const body = document.getElementById('editNoteBodyInput').value.trim();
+    if (!title || !body) return alert('タイトルと本文を入力してください');
+
+    note.title = title;
+    note.body = body;
+    note.attachType = editingNoteAttach ? editingNoteAttach.type : null;
+    note.attachData = editingNoteAttach ? editingNoteAttach.data : null;
+    note.attachName = editingNoteAttach ? editingNoteAttach.name : '';
+    note.attachSize = editingNoteAttach ? editingNoteAttach.size : '';
+
+    save();
+    document.getElementById('editNoteModal').classList.add('hidden');
+    renderNotes(room);
+  });
+  document.getElementById('closeEditNoteBtn').addEventListener('click', () => {
+    document.getElementById('editNoteModal').classList.add('hidden');
+  });
+
   document.getElementById('postNoteBtn').addEventListener('click', () => {
     const title = document.getElementById('noteTitleInput').value.trim();
     const body = document.getElementById('noteBodyInput').value.trim();
@@ -1502,6 +1721,7 @@
     const room = getCurrentRoom();
     room.notes.push({
       id: 'n_' + Date.now(),
+      authorId: state.currentUser.id,
       author: state.currentUser.name,
       title,
       body,
@@ -1520,7 +1740,7 @@
   });
 
   // ==========================================
-  // カレンダー＆イベント（日付＋開始〜終了時間＋開場時間＋場所対応）
+  // カレンダー＆イベント（作成者・管理人のみ編集・削除可能＋画像表示）
   // ==========================================
   document.getElementById('prevMonthBtn').addEventListener('click', () => {
     calDate.setMonth(calDate.getMonth() - 1);
@@ -1611,8 +1831,20 @@
       const maybeChips = ev.maybe.length
         ? `<div class="participant-row"><span style="font-size:11px; color:#64748b;">🤔 未定(${ev.maybe.length}):</span>${ev.maybe.map(n => `<span class="name-chip maybe">${escapeHtml(n)}</span>`).join('')}</div>`
         : '';
-      const attachLabel = ev.attachType === 'image' ? '📷 画像あり' : ev.attachType === 'video' ? '🎬 動画あり' : ev.attachType === 'file' ? '📎 ファイルあり' : '';
-      const attachBadge = attachLabel ? `<span style="font-size:10px; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; margin-left:6px;">${attachLabel}</span>` : '';
+
+      const inlinePreviewHtml = ev.attachType === 'image'
+        ? `<div class="media-block" onclick="event.stopPropagation(); openImageViewer('${ev.attachData}')"><img src="${ev.attachData}" class="board-media" style="max-height:160px;" /></div>`
+        : (ev.attachType ? `<div style="margin-top:4px;"><span style="font-size:10px; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px;">${ev.attachType === 'video' ? '🎬 動画あり（詳細で再生）' : '📎 ファイルあり（詳細で保存）'}</span></div>` : '');
+
+      const allowed = canManageItem(room, ev.authorId, ev.author);
+      const ownerBar = allowed ? `
+        <div class="card-actions-bar" style="border-top:1px solid #f1f5f9; padding-top:8px;" onclick="event.stopPropagation()">
+          <span style="font-size:10px; color:#64748b;">作成: ${escapeHtml(ev.author || 'メンバー')}</span>
+          <div style="display:flex; gap:5px;">
+            <button class="edit-mini-btn" onclick="openEditEventModal('${ev.id}')">✏️ 編集</button>
+            <button class="danger-btn" onclick="deleteEvent('${ev.id}')">🗑️ 削除</button>
+          </div>
+        </div>` : '';
 
       card.innerHTML = `
         <div onclick="openEventDetail('${ev.id}')">
@@ -1620,9 +1852,10 @@
             <span style="font-size:11px; color:#06c755; font-weight:bold;">📅 ${escapeHtml(dateHeader)}</span>
             <span style="font-size:11px; color:#64748b;">詳細を見る ＞</span>
           </div>
-          <div class="card-title" style="margin-top:4px;">${escapeHtml(ev.title)}${attachBadge}</div>
+          <div class="card-title" style="margin-top:4px;">${escapeHtml(ev.title)}</div>
           ${tagsHtml ? `<div class="ev-meta-tags">${tagsHtml}</div>` : ''}
           ${ev.desc ? `<div style="font-size:12px; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${escapeHtml(ev.desc)}</div>` : ''}
+          ${inlinePreviewHtml}
           <div class="participant-box">
             <div class="participant-row">
               <span style="font-size:11px; font-weight:bold; color:#0f172a;">🙋 参加(${ev.going.length}人):</span>
@@ -1636,12 +1869,106 @@
           <button class="rsvp-btn ${ev.maybe.includes(me) ? 'selected' : ''}" onclick="setRsvp('${ev.id}','maybe')">🤔 未定</button>
           <button class="rsvp-btn ${ev.notGoing.includes(me) ? 'selected' : ''}" onclick="setRsvp('${ev.id}','notGoing')">🙅 不参加</button>
         </div>
+        ${ownerBar}
       `;
       list.appendChild(card);
     });
   }
 
   window.clearDateFilter = () => { selectedDateFilter = null; renderCalendarAndEvents(getCurrentRoom()); };
+
+  window.deleteEvent = (id) => {
+    const room = getCurrentRoom();
+    const ev = room.events.find(e => e.id === id);
+    if (!ev || !canManageItem(room, ev.authorId, ev.author)) return alert('削除権限がありません');
+    if (!confirm(`イベント「${ev.title}」を削除しますか？`)) return;
+    room.events = room.events.filter(e => e.id !== id);
+    document.getElementById('eventDetailModal').classList.add('hidden');
+    save();
+    renderCalendarAndEvents(room);
+  };
+
+  window.openEditEventModal = (id) => {
+    const room = getCurrentRoom();
+    const ev = room.events.find(e => e.id === id);
+    if (!ev || !canManageItem(room, ev.authorId, ev.author)) return alert('編集権限がありません');
+
+    document.getElementById('eventDetailModal').classList.add('hidden');
+    editingEventId = id;
+    document.getElementById('editEvTitleInput').value = ev.title;
+    document.getElementById('editEvDateOnlyInput').value = getEventDateOnly(ev);
+    document.getElementById('editEvStartTimeInput').value = ev.startTime || '';
+    document.getElementById('editEvEndTimeInput').value = ev.endTime || '';
+    document.getElementById('editEvOpenTimeInput').value = ev.openTime || '';
+    document.getElementById('editEvLocationInput').value = ev.location || '';
+    document.getElementById('editEvDescInput').value = ev.desc || '';
+
+    editingEventAttach = ev.attachType ? {
+      type: ev.attachType, data: ev.attachData, name: ev.attachName, size: ev.attachSize
+    } : null;
+    updateEditEvAttachUI();
+    document.getElementById('editEventModal').classList.remove('hidden');
+  };
+
+  function updateEditEvAttachUI() {
+    const st = document.getElementById('editEvAttachStatus');
+    const clr = document.getElementById('clearEditEvAttachBtn');
+    if (editingEventAttach) {
+      st.textContent = `📎 ${editingEventAttach.name} (${editingEventAttach.size})`;
+      clr.style.display = 'inline-block';
+    } else {
+      st.textContent = '添付ファイルなし';
+      clr.style.display = 'none';
+    }
+  }
+  document.getElementById('clearEditEvAttachBtn').addEventListener('click', () => {
+    editingEventAttach = null;
+    updateEditEvAttachUI();
+  });
+  document.getElementById('editEvImgBtn').addEventListener('click', () => document.getElementById('editEvImgInput').click());
+  document.getElementById('editEvImgInput').addEventListener('change', (e) => {
+    readAttachFile(e.target.files[0], 'image', (res) => { editingEventAttach = res; updateEditEvAttachUI(); });
+    e.target.value = '';
+  });
+  document.getElementById('editEvVidBtn').addEventListener('click', () => document.getElementById('editEvVidInput').click());
+  document.getElementById('editEvVidInput').addEventListener('change', (e) => {
+    readAttachFile(e.target.files[0], 'video', (res) => { editingEventAttach = res; updateEditEvAttachUI(); });
+    e.target.value = '';
+  });
+  document.getElementById('editEvFileBtn').addEventListener('click', () => document.getElementById('editEvFileInput').click());
+  document.getElementById('editEvFileInput').addEventListener('change', (e) => {
+    readAttachFile(e.target.files[0], 'file', (res) => { editingEventAttach = res; updateEditEvAttachUI(); });
+    e.target.value = '';
+  });
+
+  document.getElementById('saveEditedEventBtn').addEventListener('click', () => {
+    const room = getCurrentRoom();
+    const ev = room.events.find(e => e.id === editingEventId);
+    if (!ev || !canManageItem(room, ev.authorId, ev.author)) return;
+
+    const title = document.getElementById('editEvTitleInput').value.trim();
+    const dateOnly = document.getElementById('editEvDateOnlyInput').value;
+    if (!title || !dateOnly) return alert('イベント名と開催日を入力してください');
+
+    ev.title = title;
+    ev.dateOnly = dateOnly;
+    ev.startTime = document.getElementById('editEvStartTimeInput').value;
+    ev.endTime = document.getElementById('editEvEndTimeInput').value;
+    ev.openTime = document.getElementById('editEvOpenTimeInput').value;
+    ev.location = document.getElementById('editEvLocationInput').value.trim();
+    ev.desc = document.getElementById('editEvDescInput').value.trim();
+    ev.attachType = editingEventAttach ? editingEventAttach.type : null;
+    ev.attachData = editingEventAttach ? editingEventAttach.data : null;
+    ev.attachName = editingEventAttach ? editingEventAttach.name : '';
+    ev.attachSize = editingEventAttach ? editingEventAttach.size : '';
+
+    save();
+    document.getElementById('editEventModal').classList.add('hidden');
+    renderCalendarAndEvents(room);
+  });
+  document.getElementById('closeEditEventBtn').addEventListener('click', () => {
+    document.getElementById('editEventModal').classList.add('hidden');
+  });
 
   window.openEventDetail = (id) => {
     const room = getCurrentRoom();
@@ -1682,6 +2009,19 @@
         <span style="color:#64748b;">${ev.notGoing.length ? ev.notGoing.map(n => escapeHtml(n)).join('、') : 'なし'}</span>
       </div>
     `;
+
+    const ownerBox = document.getElementById('evDetailOwnerActions');
+    if (canManageItem(room, ev.authorId, ev.author)) {
+      ownerBox.style.display = 'flex';
+      ownerBox.innerHTML = `
+        <button class="edit-mini-btn" style="flex:1; padding:9px;" onclick="openEditEventModal('${ev.id}')">✏️ イベントを編集</button>
+        <button class="danger-btn" style="flex:1; padding:9px;" onclick="deleteEvent('${ev.id}')">🗑️ イベントを削除</button>
+      `;
+    } else {
+      ownerBox.style.display = 'none';
+      ownerBox.innerHTML = '';
+    }
+
     document.getElementById('eventDetailModal').classList.remove('hidden');
   };
 
@@ -1741,6 +2081,8 @@
     const room = getCurrentRoom();
     room.events.push({
       id: 'e_' + Date.now(),
+      authorId: state.currentUser.id,
+      author: state.currentUser.name,
       title,
       dateOnly,
       startTime,
