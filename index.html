@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>オープンチャット</title>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="./icon.png" />
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Meiryo", sans-serif; }
+    body { background-color: #1e293b; display: flex; justify-content: center; align-items: center; height: 100dvh; }
+
+    .app-container {
+      width: 100%; max-width: 430px; height: 100dvh; max-height: 850px;
+      background-color: #8cabd9; display: flex; flex-direction: column; position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35); overflow: hidden;
+    }
+
+    /* 共通モーダル */
+    .modal-screen {
+      position: absolute; inset: 0; background: #ffffff; z-index: 40;
+      display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px;
+      overflow-y: auto;
+    }
+    .modal-screen.hidden { display: none; }
+    .modal-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.65); z-index: 45;
+      display: flex; justify-content: center; align-items: center; padding: 18px;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-box {
+      background: #fff; width: 100%; max-width: 360px; border-radius: 14px; padding: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.28); max-height: 86vh; display: flex; flex-direction: column; overflow-y: auto;
+    }
+
+    /* プロフィール画像設定 */
+    .avatar-upload-wrap { position: relative; width: 80px; height: 80px; margin-bottom: 10px; cursor: pointer; }
+    .avatar-preview {
+      width: 80px; height: 80px; border-radius: 50%; background: #f1f5f9; border: 3px solid #06c755;
+      display: flex; justify-content: center; align-items: center; font-size: 38px; overflow: hidden;
+    }
+    .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-edit-badge {
+      position: absolute; bottom: 0; right: 0; background: #06c755; color: #fff;
+      width: 26px; height: 26px; border-radius: 50%; font-size: 13px;
+      display: flex; justify-content: center; align-items: center; border: 2px solid #fff;
+    }
+
+    /* X連携ボックス */
+    .x-sync-box {
+      width: 100%; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 12px; margin-bottom: 14px; text-align: left;
+    }
+    .x-sync-header { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: bold; color: #0f172a; }
+    .x-input-wrap { margin-top: 10px; }
+    .x-input-wrap.hidden { display: none; }
+
+    .text-input, .textarea-input {
+      width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px;
+      font-size: 14px; margin-bottom: 9px; outline: none; background: #fff;
+    }
+    .text-input:focus, .textarea-input:focus { border-color: #06c755; }
+    .primary-btn {
+      width: 100%; padding: 12px; background-color: #06c755; color: white;
+      border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer;
+    }
+    .x-open-btn {
+      display: flex; justify-content: center; align-items: center; gap: 6px;
+      width: 100%; padding: 12px; background-color: #000000; color: #ffffff;
+      border: none; border-radius: 8px; font-size: 14px; font-weight: bold;
+      text-decoration: none; cursor: pointer; margin-top: 10px;
+    }
+    .secondary-btn {
+      width: 100%; padding: 10px; background: #f1f5f9; color: #334155;
+      border: none; border-radius: 8px; font-size: 13px; font-weight: bold; margin-top: 8px; cursor: pointer;
+    }
+
+    /* ヘッダー */
+    .header {
+      background-color: #222e42; color: white; padding: 10px 12px;
+      display: flex; justify-content: space-between; align-items: center; z-index: 10; gap: 6px;
+    }
+    .header-left { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+    .header-right { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+    .icon-btn {
+      background: rgba(255,255,255,0.15); color: white; border: none;
+      padding: 6px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; white-space: nowrap;
+    }
+    .icon-btn.invite-btn { background: #06c755; font-weight: bold; }
+    .room-info { display: flex; flex-direction: column; overflow: hidden; }
+    .room-name { font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .room-sub { font-size: 10px; color: #94a3b8; }
+
+    /* 施錠バー */
+    .lock-bar {
+      background: #0f172a; color: #f8fafc; padding: 6px 12px; font-size: 11px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .lock-bar.hidden { display: none; }
+    .lock-toggle { padding: 4px 10px; border-radius: 12px; border: none; font-size: 11px; font-weight: bold; cursor: pointer; color: #fff; }
+    .lock-toggle.open { background: #06c755; }
+    .lock-toggle.locked { background: #ef4444; }
+
+    /* 3タブ切り替え */
+    .nav-tabs { display: flex; background: #ffffff; border-bottom: 1px solid #e2e8f0; z-index: 9; }
+    .nav-tab {
+      flex: 1; padding: 10px 4px; text-align: center; font-size: 13px; font-weight: bold;
+      color: #64748b; border: none; background: none; cursor: pointer; border-bottom: 3px solid transparent;
+    }
+    .nav-tab.active { color: #06c755; border-bottom-color: #06c755; }
+
+    .tab-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .tab-pane.hidden { display: none; }
+
+    /* チャットエリア */
+    .chat-area { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 11px; }
+    .system-msg {
+      align-self: center; background: rgba(0, 0, 0, 0.28); color: #fff;
+      font-size: 11px; padding: 4px 12px; border-radius: 12px; text-align: center; max-width: 90%;
+    }
+    .join-divider {
+      display: flex; align-items: center; gap: 8px; margin: 6px 0; color: #fff; font-size: 11px; font-weight: bold;
+    }
+    .join-divider::before, .join-divider::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,0.45); }
+
+    .msg-row { display: flex; align-items: flex-end; gap: 8px; max-width: 85%; }
+    .msg-row.mine { align-self: flex-end; flex-direction: row-reverse; }
+    .msg-row.others { align-self: flex-start; }
+
+    .avatar-click-wrap { position: relative; align-self: flex-start; flex-shrink: 0; cursor: pointer; }
+    .msg-avatar {
+      width: 36px; height: 36px; border-radius: 50%; background: #fff; overflow: hidden;
+      display: flex; justify-content: center; align-items: center; font-size: 18px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+    }
+    .msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .x-mini-badge {
+      position: absolute; bottom: -2px; right: -2px; background: #000000; color: #ffffff;
+      width: 15px; height: 15px; border-radius: 50%; font-size: 9px; font-weight: bold;
+      display: flex; justify-content: center; align-items: center; border: 1.5px solid #ffffff;
+    }
+
+    .msg-content-wrap { display: flex; flex-direction: column; }
+    .msg-sender { font-size: 11px; color: #fff; margin-bottom: 3px; text-shadow: 0 1px 2px rgba(0,0,0,0.25); display: flex; align-items: center; gap: 4px; }
+    .role-badge { font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: bold; background: rgba(0,0,0,0.45); color: #fde047; }
+
+    .bubble-wrap { display: flex; align-items: flex-end; gap: 5px; }
+    .mine .bubble-wrap { flex-direction: row-reverse; }
+    .bubble {
+      padding: 9px 13px; border-radius: 16px; font-size: 14px; line-height: 1.4;
+      word-break: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .others .bubble { background-color: #ffffff; color: #1e293b; border-top-left-radius: 4px; }
+    .mine .bubble { background-color: #8de055; color: #0f172a; border-top-right-radius: 4px; }
+
+    /* メディア・ファイル表示 */
+    .chat-media { max-width: 210px; max-height: 230px; border-radius: 12px; display: block; background: #000; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+    .file-card {
+      background: #fff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 10px 12px;
+      display: flex; align-items: center; gap: 10px; max-width: 240px; text-decoration: none; color: #1e293b;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .file-icon { font-size: 24px; flex-shrink: 0; }
+    .file-meta { overflow: hidden; }
+    .file-name { font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-size { font-size: 10px; color: #64748b; margin-top: 2px; }
+    .msg-time { font-size: 10px; color: #f1f5f9; white-space: nowrap; }
+
+    /* 入力エリア */
+    .ng-alert { background: #ef4444; color: #fff; font-size: 12px; padding: 7px; text-align: center; font-weight: bold; display: none; }
+    .ng-alert.show { display: block; }
+    .input-area { background: #ffffff; padding: 8px; display: flex; gap: 5px; align-items: center; }
+    .attach-btn {
+      background: #f1f5f9; border: none; border-radius: 50%; width: 34px; height: 34px;
+      font-size: 16px; display: flex; justify-content: center; align-items: center; cursor: pointer; flex-shrink: 0;
+    }
+    .msg-input {
+      flex: 1; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 20px;
+      font-size: 16px; outline: none; background: #f8fafc; min-width: 0;
+    }
+    .send-btn {
+      background: #06c755; color: #fff; border: none; border-radius: 20px;
+      padding: 8px 13px; font-size: 13px; font-weight: bold; cursor: pointer; flex-shrink: 0;
+    }
+
+    /* ノート＆イベント画面 */
+    .board-area { flex: 1; background: #f1f5f9; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .card-title { font-size: 15px; font-weight: bold; color: #0f172a; margin-bottom: 4px; }
+    .card-body { font-size: 13px; color: #334155; line-height: 1.5; white-space: pre-wrap; margin-bottom: 8px; }
+
+    /* カレンダーUI */
+    .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .cal-nav-btn { background: #f1f5f9; border: none; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; text-align: center; }
+    .cal-dow { font-size: 11px; font-weight: bold; color: #64748b; padding-bottom: 4px; }
+    .cal-dow:first-child { color: #ef4444; }
+    .cal-dow:last-child { color: #3b82f6; }
+    .cal-cell {
+      aspect-ratio: 1 / 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
+      border-radius: 8px; font-size: 13px; cursor: pointer; position: relative; border: 1.5px solid transparent;
+    }
+    .cal-cell.empty { cursor: default; }
+    .cal-cell.today { background: #f1f5f9; font-weight: bold; }
+    .cal-cell.selected { border-color: #06c755; background: #e8f9ef; font-weight: bold; color: #06c755; }
+    .cal-dot { width: 6px; height: 6px; border-radius: 50%; background: #06c755; margin-top: 2px; }
+
+    /* 参加者チップ＆出欠ボタン */
+    .participant-box {
+      background: #f8fafc; border-radius: 8px; padding: 8px 10px; margin-top: 8px; font-size: 12px;
+    }
+    .participant-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-bottom: 4px; }
+    .participant-row:last-child { margin-bottom: 0; }
+    .name-chip {
+      background: #e8f9ef; color: #047857; border: 1px solid #a7f3d0;
+      padding: 2px 7px; border-radius: 10px; font-size: 11px; font-weight: bold;
+    }
+    .name-chip.maybe { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+    .rsvp-group { display: flex; gap: 6px; margin-top: 10px; }
+    .rsvp-btn {
+      flex: 1; padding: 7px 4px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff;
+      font-size: 12px; font-weight: bold; cursor: pointer;
+    }
+    .rsvp-btn.selected { background: #e8f9ef; border-color: #06c755; color: #06c755; }
+
+    /* ルーム一覧ドロワー */
+    .drawer-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); z-index: 30; display: none; }
+    .drawer-overlay.open { display: block; }
+    .room-drawer {
+      position: absolute; top: 0; bottom: 0; left: 0; width: 82%; max-width: 310px;
+      background: #fff; z-index: 35; display: flex; flex-direction: column;
+      transform: translateX(-100%); transition: transform 0.25s ease;
+    }
+    .room-drawer.open { transform: translateX(0); }
+    .room-item { padding: 11px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 7px; cursor: pointer; }
+    .room-item.active { background: #e8f9ef; border-color: #06c755; }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- 1. 入室・プロフィール設定画面 -->
+  <div class="modal-screen" id="joinScreen">
+    <div style="font-size: 19px; font-weight: bold; color: #0f172a; margin-bottom: 4px;">オープンチャット参加設定</div>
+    <div style="font-size: 12px; color: #64748b; margin-bottom: 14px; text-align: center;">
+      アイコン・ニックネーム・X連携の有無を設定してください
+    </div>
+
+    <input type="file" id="avatarFileInput" accept="image/*" style="display: none;" />
+    <div class="avatar-upload-wrap" id="avatarUploadBtn" title="タップして画像を選択">
+      <div class="avatar-preview" id="avatarPreview">🐱</div>
+      <div class="avatar-edit-badge">📷</div>
+    </div>
+    <div style="font-size: 11px; color: #06c755; font-weight: bold; margin-bottom: 12px;">↑ タップして好きな画像に変更</div>
+
+    <input type="text" id="nicknameInput" class="text-input" placeholder="ニックネームを入力 (例: たなか)" maxlength="15" />
+
+    <div class="x-sync-box">
+      <label class="x-sync-header" style="cursor: pointer;">
+        <span>𝕏 アカウントを記載・連携する</span>
+        <input type="checkbox" id="xSyncToggle" style="width: 18px; height: 18px; accent-color: #000;" />
+      </label>
+      <div style="font-size: 11px; color: #64748b; margin-top: 4px;">
+        ONにするとアイコンから自分のXページを開けるようになります（OFFなら完全匿名）
+      </div>
+      <div class="x-input-wrap hidden" id="xInputWrap">
+        <input type="text" id="xHandleInput" class="text-input" placeholder="@ユーザー名 または https://x.com/..." style="margin-bottom: 0; font-size: 14px;" />
+      </div>
+    </div>
+
+    <button id="joinBtn" class="primary-btn">トークに参加する</button>
+  </div>
+
+  <!-- 2. イベント詳細モーダル（イベントカードタップ時に開く） -->
+  <div class="modal-overlay hidden" id="eventDetailModal">
+    <div class="modal-box">
+      <div style="font-size: 12px; color: #06c755; font-weight: bold;" id="evDetailDate">📅 2026-11-20 21:00</div>
+      <div style="font-size: 17px; font-weight: bold; color: #0f172a; margin: 4px 0 10px;" id="evDetailTitle">イベント名</div>
+      <div style="font-size: 13px; color: #334155; line-height: 1.5; white-space: pre-wrap; background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 10px;" id="evDetailDesc">詳細説明</div>
+      <div id="evDetailAttachArea" style="margin-bottom: 10px;"></div>
+      <div style="font-size: 12px; font-weight: bold; color: #0f172a; margin-bottom: 4px;">👥 出欠状況</div>
+      <div id="evDetailMembers" class="participant-box" style="margin-top: 0; margin-bottom: 10px;"></div>
+      <button id="closeEvDetailBtn" class="secondary-btn">閉じる</button>
+    </div>
+  </div>
+
+  <!-- 3. プロフィール＆Xアカウントジャンプモーダル -->
+  <div class="modal-overlay hidden" id="userProfileModal">
+    <div class="modal-box" style="text-align: center; align-items: center;">
+      <div class="avatar-preview" id="profileModalAvatar" style="width: 72px; height: 72px; margin-bottom: 10px;">🐱</div>
+      <div style="font-size: 17px; font-weight: bold; color: #0f172a;" id="profileModalName">ユーザー名</div>
+      <div style="font-size: 12px; color: #64748b; margin-top: 2px;" id="profileModalRole">メンバー</div>
+      <div id="profileModalXArea" style="width: 100%; margin-top: 12px;"></div>
+      <button id="closeProfileModalBtn" class="secondary-btn">閉じる</button>
+    </div>
+  </div>
+
+  <!-- 4. 自分のX連携設定を後から変更するモーダル -->
+  <div class="modal-overlay hidden" id="editXModal">
+    <div class="modal-box">
+      <div style="font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 10px;">𝕏 アカウント連携設定</div>
+      <label class="x-sync-header" style="margin-bottom: 10px; cursor: pointer;">
+        <span>𝕏 アカウントをプロフィールに記載</span>
+        <input type="checkbox" id="editXToggle" style="width: 18px; height: 18px; accent-color: #000;" />
+      </label>
+      <input type="text" id="editXHandleInput" class="text-input" placeholder="@ユーザー名 または https://x.com/..." />
+      <button id="saveXSettingsBtn" class="primary-btn">設定を保存する</button>
+      <button id="closeEditXBtn" class="secondary-btn">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- 5. メンバー管理・役職任命モーダル -->
+  <div class="modal-overlay hidden" id="membersModal">
+    <div class="modal-box">
+      <div style="font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 4px;">メンバー＆役職管理</div>
+      <div style="font-size: 11px; color: #64748b; text-align: center; margin-bottom: 10px;">
+        アイコンをタップすると𝕏アカウントを確認できます
+      </div>
+      <div style="overflow-y: auto; max-height: 210px; margin-bottom: 8px;" id="memberListEl"></div>
+      <button id="openEditXBtn" class="secondary-btn" style="background:#000; color:#fff;">𝕏 自分のX連携ON/OFF・IDを変更</button>
+      <button id="simFriendBtn" class="secondary-btn" style="background:#e0f2fe; color:#0369a1;">＋ テスト用に新しい友達を1人入室させる</button>
+      <button id="toggleRoleTestBtn" class="secondary-btn" style="background:#fef3c7; color:#92400e;">🔄 自分と一般参加者の視点を切り替える</button>
+      <button id="closeMembersBtn" class="secondary-btn">閉じる</button>
+    </div>
+  </div>
+
+  <!-- 6. 招待URL発行モーダル -->
+  <div class="modal-overlay hidden" id="inviteModal">
+    <div class="modal-box" style="text-align: center;">
+      <div style="font-size: 28px; margin-bottom: 6px;">🔗</div>
+      <div style="font-size: 16px; font-weight: bold; margin-bottom: 6px;">メインルーム招待リンク</div>
+      <div style="font-size: 12px; color: #64748b; margin-bottom: 12px;">
+        このURLから参加したメンバーも、過去のトーク・ノート・イベントをすべて閲覧できます。
+      </div>
+      <input type="text" id="inviteUrlBox" class="text-input" readonly style="font-size: 12px; background: #f8fafc;" />
+      <button id="copyUrlBtn" class="primary-btn">URLをコピーする</button>
+      <button id="closeInviteBtn" class="secondary-btn">閉じる</button>
+    </div>
+  </div>
+
+  <!-- 7. ルーム一覧ドロワー -->
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <div class="room-drawer" id="roomDrawer">
+    <div style="background:#222e42; color:#fff; padding:14px 16px; font-weight:bold; display:flex; justify-content:space-between; align-items:center;">
+      <span>参加中のトークルーム</span>
+      <button id="closeDrawerBtn" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer;">×</button>
+    </div>
+    <div style="flex:1; overflow-y:auto; padding:10px;" id="roomListEl"></div>
+    <div id="adminCreateRoomArea" style="padding:12px; border-top:1px solid #e2e8f0; background:#f8fafc;">
+      <div style="font-size:11px; font-weight:bold; color:#0f172a; margin-bottom:6px;">👑 管理人専用：新しいルームを作成</div>
+      <input type="text" id="newRoomNameInput" class="text-input" placeholder="新しい部屋名を入力" maxlength="20" style="margin-bottom:6px; font-size:13px;" />
+      <button id="createRoomBtn" class="primary-btn" style="padding:9px; font-size:13px; background:#222e42;">＋ ルームを追加</button>
+    </div>
+  </div>
+
+  <!-- ヘッダー -->
+  <div class="header">
+    <div class="header-left">
+      <button id="menuBtn" class="icon-btn">≡ 部屋</button>
+      <div class="room-info">
+        <div class="room-name" id="headerRoomName">雑談メインルーム</div>
+        <div class="room-sub" id="headerUserStatus">読み込み中...</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <button id="inviteBtn" class="icon-btn invite-btn">🔗 招待</button>
+      <button id="membersBtn" class="icon-btn">👥</button>
+      <button id="resetBtn" class="icon-btn">初期化</button>
+    </div>
+  </div>
+
+  <!-- 施錠コントロールバー -->
+  <div class="lock-bar hidden" id="lockBar">
+    <span id="lockStatusLabel">🔓 募集中（新規入室OK）</span>
+    <button id="toggleLockBtn" class="lock-toggle open">鍵をかける 🔒</button>
+  </div>
+
+  <!-- 3タブメニュー -->
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-tab="talk">💬 トーク</button>
+    <button class="nav-tab" data-tab="note">📝 ノート</button>
+    <button class="nav-tab" data-tab="event">📅 イベント</button>
+  </div>
+
+  <!-- タブ1：トーク -->
+  <div class="tab-pane" id="tab-talk">
+    <div class="chat-area" id="chatArea"></div>
+    <div class="ng-alert" id="ngAlert">⚠️ 禁止ワードが含まれています</div>
+    <form class="input-area" id="chatForm">
+      <input type="file" id="imgInput" accept="image/*" style="display:none;" />
+      <input type="file" id="vidInput" accept="video/*" style="display:none;" />
+      <input type="file" id="fileInput" style="display:none;" />
+      <button type="button" id="btnImg" class="attach-btn" title="画像">📷</button>
+      <button type="button" id="btnVid" class="attach-btn" title="動画">🎬</button>
+      <button type="button" id="btnFile" class="attach-btn" title="ファイル">📎</button>
+      <input type="text" id="msgInput" class="msg-input" placeholder="メッセージを入力" autocomplete="off" />
+      <button type="submit" class="send-btn">送信</button>
+    </form>
+  </div>
+
+  <!-- タブ2：ノート -->
+  <div class="tab-pane hidden" id="tab-note">
+    <div class="board-area">
+      <div class="card">
+        <div style="font-size:13px; font-weight:bold; margin-bottom:8px;">📝 新しいノートを投稿</div>
+        <input type="text" id="noteTitleInput" class="text-input" placeholder="タイトル" />
+        <textarea id="noteBodyInput" class="textarea-input" rows="2" placeholder="メンバーに共有したい内容やルールなど"></textarea>
+        <button id="postNoteBtn" class="primary-btn" style="padding:10px; font-size:13px;">ノートを投稿する</button>
+      </div>
+      <div id="noteListEl" style="display:flex; flex-direction:column; gap:10px;"></div>
+    </div>
+  </div>
+
+  <!-- タブ3：カレンダー＆イベント -->
+  <div class="tab-pane hidden" id="tab-event">
+    <div class="board-area">
+      <!-- 月間カレンダーカード -->
+      <div class="card">
+        <div class="cal-header">
+          <button id="prevMonthBtn" class="cal-nav-btn">◀ 前月</button>
+          <div style="font-size:15px; font-weight:bold; color:#0f172a;" id="calMonthTitle">2026年 11月</div>
+          <button id="nextMonthBtn" class="cal-nav-btn">次月 ▶</button>
+        </div>
+        <div class="cal-grid" id="calGridEl"></div>
+        <div id="calFilterStatus" style="font-size:11px; color:#06c755; font-weight:bold; margin-top:8px; text-align:center;">
+          ●印の日付をタップすると予定を絞り込めます
+        </div>
+      </div>
+
+      <!-- イベント一覧（タップで詳細表示） -->
+      <div id="eventListEl" style="display:flex; flex-direction:column; gap:10px;"></div>
+
+      <!-- 新規イベント作成フォーム（画像・ファイル・詳細付き） -->
+      <div class="card">
+        <div style="font-size:13px; font-weight:bold; margin-bottom:8px;">➕ 新しいイベントを作成</div>
+        <input type="text" id="eventTitleInput" class="text-input" placeholder="イベント名 (例: 週末オンライン会)" />
+        <input type="datetime-local" id="eventDateInput" class="text-input" />
+        <textarea id="eventDescInput" class="textarea-input" rows="2" placeholder="詳細メモ・集合場所・持ち物など（任意）"></textarea>
+
+        <!-- イベントへの画像・ファイル添付ボタン -->
+        <input type="file" id="evImgInput" accept="image/*" style="display:none;" />
+        <input type="file" id="evFileInput" style="display:none;" />
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <button type="button" id="evAttachImgBtn" class="secondary-btn" style="margin-top:0; flex:1;">📷 画像を添付</button>
+          <button type="button" id="evAttachFileBtn" class="secondary-btn" style="margin-top:0; flex:1;">📎 ファイルを添付</button>
+        </div>
+        <div id="evAttachPreview" style="font-size:11px; color:#06c755; font-weight:bold; margin-bottom:8px;"></div>
+
+        <button id="postEventBtn" class="primary-btn" style="padding:10px; font-size:13px;">カレンダーにイベントを追加</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const NG_WORDS = ['バカ', 'アホ', '死ね', '荒らし', 'LINE交換', '出会い'];
+  const STORAGE_KEY = 'opchat_final_v3';
+
+  function getInitialState() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(Math.min(28, now.getDate() + 2)).padStart(2, '0');
+    return {
+      creatorId: null,
+      currentUser: null,
+      currentRoomId: 'room_main',
+      rooms: [
+        {
+          id: 'room_main',
+          name: '雑談メインルーム',
+          isLocked: false,
+          members: [
+            { id: 'bot_1', name: '先行メンバー猫', avatar: '🐱', isImg: false, role: 'member', xHandle: 'X' }
+          ],
+          messages: [
+            { type: 'system', text: 'オープンチャットが開設されました！' },
+            { type: 'msg', senderId: 'bot_1', senderName: '先行メンバー猫', avatar: '🐱', isImg: false, role: 'member', xHandle: 'X', text: 'こんにちは！「📅 イベント」タブに月間カレンダーと詳細表示が入ったよ！', time: '09:30' }
+          ],
+          notes: [
+            { id: 'n1', author: '先行メンバー猫', title: '📌 𝕏連携＆カレンダーの使い方', body: 'アイコンをタップすると𝕏アカウントへ飛べます。イベントカードをタップすると詳細や添付資料が見れます！', likes: 1 }
+          ],
+          events: [
+            {
+              id: 'e1',
+              title: '初回顔合わせトーク会',
+              date: `${y}-${m}-${d}T21:00`,
+              desc: 'みんなで雑談する会です！途中参加・耳だけ参加もOK。\n※イベントカードをタップするとこの詳細画面が開きます。',
+              attachType: null,
+              attachData: null,
+              attachName: '',
+              attachSize: '',
+              going: ['先行メンバー猫'],
+              maybe: [],
+              notGoing: []
+            }
+          ]
+        }
+      ]
+    };
+  }
+
+  let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || getInitialState();
+  let selectedAvatar = '🐱';
+  let selectedAvatarIsImg = false;
+
+  // カレンダー表示用の状態
+  let calDate = new Date();
+  let selectedDateFilter = null; // "YYYY-MM-DD" または null
+
+  // イベント作成時の一時添付データ
+  let pendingEvAttach = null;
+
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      alert('保存容量の上限に達しました。右上の「初期化」で整理してください。');
+    }
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]));
+  }
+
+  function getTime() {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  }
+
+  function checkNg(text) {
+    return NG_WORDS.find(w => text.toLowerCase().includes(w.toLowerCase()));
+  }
+
+  function formatXUrl(raw) {
+    if (!raw) return '';
+    let s = raw.trim();
+    if (s.startsWith('http://') || s.startsWith('https://')) return s;
+    s = s.replace(/^@/, '');
+    return s ? `https://x.com/${encodeURIComponent(s)}` : '';
+  }
+
+  function formatXDisplay(raw) {
+    if (!raw) return '';
+    let s = raw.trim().replace(/^https?:\/\/(www\.)?(twitter\.com|x\.com)\//, '');
+    s = s.split('?')[0].split('/')[0].replace(/^@/, '');
+    return s ? '@' + s : '';
+  }
+
+  function getCurrentRoom() {
+    return state.rooms.find(r => r.id === state.currentRoomId) || state.rooms[0];
+  }
+
+  function getMyRoleInRoom(room) {
+    if (!state.currentUser) return 'member';
+    if (state.currentUser.id === state.creatorId) return 'admin';
+    const m = room.members.find(x => x.id === state.currentUser.id);
+    return m ? m.role : 'member';
+  }
+
+  function getRoleBadge(role) {
+    if (role === 'admin') return '<span class="role-badge">👑 管理人</span>';
+    if (role === 'co-admin') return '<span class="role-badge">🛡️ 共同管理人</span>';
+    if (role === 'leader') return '<span class="role-badge">⭐ リーダー</span>';
+    return '';
+  }
+
+  // X連携チェックボックス
+  const xSyncToggle = document.getElementById('xSyncToggle');
+  const xInputWrap = document.getElementById('xInputWrap');
+  xSyncToggle.addEventListener('change', () => {
+    xInputWrap.classList.toggle('hidden', !xSyncToggle.checked);
+  });
+
+  // アイコン画像アップロード
+  document.getElementById('avatarUploadBtn').addEventListener('click', () => {
+    document.getElementById('avatarFileInput').click();
+  });
+  document.getElementById('avatarFileInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 160; canvas.height = 160;
+        const ctx = canvas.getContext('2d');
+        const min = Math.min(img.width, img.height);
+        ctx.drawImage(img, (img.width - min)/2, (img.height - min)/2, min, min, 0, 0, 160, 160);
+        selectedAvatar = canvas.toDataURL('image/jpeg', 0.8);
+        selectedAvatarIsImg = true;
+        document.getElementById('avatarPreview').innerHTML = `<img src="${selectedAvatar}" />`;
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // 入室処理
+  document.getElementById('joinBtn').addEventListener('click', () => {
+    const name = document.getElementById('nicknameInput').value.trim();
+    if (!name) return alert('ニックネームを入力してください');
+    if (checkNg(name)) return alert('禁止ワードが含まれています');
+
+    let xHandle = '';
+    if (xSyncToggle.checked) {
+      const rawX = document.getElementById('xHandleInput').value.trim();
+      if (!rawX) return alert('𝕏アカウントのユーザー名を入力するか、連携のチェックを外してください');
+      xHandle = formatXDisplay(rawX);
+    }
+
+    const userId = 'u_' + Date.now();
+    const isFirstCreator = !state.creatorId;
+    if (isFirstCreator) state.creatorId = userId;
+
+    state.currentUser = {
+      id: userId,
+      name: name,
+      avatar: selectedAvatar,
+      isImg: selectedAvatarIsImg,
+      xHandle: xHandle
+    };
+
+    const mainRoom = state.rooms.find(r => r.id === 'room_main');
+    if (mainRoom) {
+      mainRoom.members.push({
+        ...state.currentUser,
+        role: isFirstCreator ? 'admin' : 'member'
+      });
+      mainRoom.messages.push({ type: 'divider', text: `ここから ${name} が参加（過去の履歴も閲覧可能）` });
+    }
+
+    save();
+    document.getElementById('joinScreen').classList.add('hidden');
+    renderAll();
+  });
+
+  // プロフィール＆Xジャンプモーダル
+  window.openUserProfile = (userId, fallbackName, fallbackAvatar, fallbackIsImg, fallbackRole, fallbackX) => {
+    const room = getCurrentRoom();
+    const member = room.members.find(m => m.id === userId) || {
+      name: fallbackName, avatar: fallbackAvatar, isImg: fallbackIsImg, role: fallbackRole, xHandle: fallbackX
+    };
+
+    document.getElementById('profileModalAvatar').innerHTML = member.isImg ? `<img src="${member.avatar}" />` : member.avatar;
+    document.getElementById('profileModalName').textContent = member.name;
+    const roleLabel = member.role === 'admin' ? '👑 管理人' : member.role === 'co-admin' ? '🛡️ 共同管理人' : member.role === 'leader' ? '⭐ リーダー' : 'メンバー';
+    document.getElementById('profileModalRole').textContent = roleLabel;
+
+    const xArea = document.getElementById('profileModalXArea');
+    if (member.xHandle) {
+      const xUrl = formatXUrl(member.xHandle);
+      xArea.innerHTML = `
+        <div style="font-size:12px; color:#334155; background:#f1f5f9; padding:6px 10px; border-radius:6px;">
+          連携アカウント: <strong>${escapeHtml(member.xHandle)}</strong>
+        </div>
+        <a href="${xUrl}" target="_blank" rel="noopener noreferrer" class="x-open-btn">
+          𝕏 アカウントを開く
+        </a>
+      `;
+    } else {
+      xArea.innerHTML = `
+        <div style="font-size:12px; color:#94a3b8; background:#f8fafc; padding:10px; border-radius:8px;">
+          𝕏 アカウントは未連携（非公開）です
+        </div>
+      `;
+    }
+    document.getElementById('userProfileModal').classList.remove('hidden');
+  };
+
+  document.getElementById('closeProfileModalBtn').addEventListener('click', () => {
+    document.getElementById('userProfileModal').classList.add('hidden');
+  });
+
+  // X連携設定変更
+  document.getElementById('openEditXBtn').addEventListener('click', () => {
+    document.getElementById('membersModal').classList.add('hidden');
+    const hasX = Boolean(state.currentUser.xHandle);
+    document.getElementById('editXToggle').checked = hasX;
+    document.getElementById('editXHandleInput').value = state.currentUser.xHandle || '';
+    document.getElementById('editXModal').classList.remove('hidden');
+  });
+  document.getElementById('closeEditXBtn').addEventListener('click', () => {
+    document.getElementById('editXModal').classList.add('hidden');
+  });
+  document.getElementById('saveXSettingsBtn').addEventListener('click', () => {
+    const enabled = document.getElementById('editXToggle').checked;
+    const raw = document.getElementById('editXHandleInput').value.trim();
+    if (enabled && !raw) return alert('ユーザー名を入力するか、チェックを外してください');
+
+    const newX = enabled ? formatXDisplay(raw) : '';
+    state.currentUser.xHandle = newX;
+
+    state.rooms.forEach(r => {
+      const m = r.members.find(x => x.id === state.currentUser.id);
+      if (m) m.xHandle = newX;
+      r.messages.forEach(msg => {
+        if (msg.senderId === state.currentUser.id) msg.xHandle = newX;
+      });
+    });
+
+    save();
+    document.getElementById('editXModal').classList.add('hidden');
+    renderAll();
+  });
+
+  // 全体描画
+  function renderAll() {
+    const room = getCurrentRoom();
+    const myRole = getMyRoleInRoom(room);
+    const isGlobalAdmin = state.currentUser && state.currentUser.id === state.creatorId;
+
+    document.getElementById('headerRoomName').textContent = (room.isLocked ? '🔒 ' : '') + room.name;
+    const roleText = myRole === 'admin' ? '👑管理人' : myRole === 'co-admin' ? '🛡️共同管理人' : myRole === 'leader' ? '⭐リーダー' : 'メンバー';
+    document.getElementById('headerUserStatus').textContent = `${state.currentUser.name} (${roleText})`;
+
+    const lockBar = document.getElementById('lockBar');
+    const toggleLockBtn = document.getElementById('toggleLockBtn');
+    if (myRole === 'admin' || myRole === 'co-admin') {
+      lockBar.classList.remove('hidden');
+      if (room.isLocked) {
+        document.getElementById('lockStatusLabel').textContent = `🔒 施錠中（許可済み ${room.members.length}人のみ入室可）`;
+        toggleLockBtn.textContent = '鍵を解除 🔓';
+        toggleLockBtn.className = 'lock-toggle locked';
+      } else {
+        document.getElementById('lockStatusLabel').textContent = `🔓 募集中（現在 ${room.members.length}人参加中）`;
+        toggleLockBtn.textContent = '鍵をかける 🔒';
+        toggleLockBtn.className = 'lock-toggle open';
+      }
+    } else {
+      lockBar.classList.add('hidden');
+    }
+
+    document.getElementById('adminCreateRoomArea').style.display = isGlobalAdmin ? 'block' : 'none';
+
+    renderMessages(room);
+    renderNotes(room);
+    renderCalendarAndEvents(room);
+  }
+
+  // メッセージ描画
+  function renderMessages(room) {
+    const chatArea = document.getElementById('chatArea');
+    chatArea.innerHTML = '';
+    room.messages.forEach(m => {
+      if (m.type === 'system') {
+        const div = document.createElement('div');
+        div.className = 'system-msg';
+        div.textContent = m.text;
+        chatArea.appendChild(div);
+      } else if (m.type === 'divider') {
+        const div = document.createElement('div');
+        div.className = 'join-divider';
+        div.textContent = m.text;
+        chatArea.appendChild(div);
+      } else {
+        const isMine = m.senderId === state.currentUser.id;
+        const row = document.createElement('div');
+        row.className = `msg-row ${isMine ? 'mine' : 'others'}`;
+
+        let bodyHtml = '';
+        if (m.mediaType === 'image') {
+          bodyHtml = `<img src="${m.mediaData}" class="chat-media" />`;
+        } else if (m.mediaType === 'video') {
+          bodyHtml = `<video src="${m.mediaData}" controls playsinline class="chat-media"></video>`;
+        } else if (m.mediaType === 'file') {
+          bodyHtml = `
+            <a href="${m.mediaData}" download="${escapeHtml(m.fileName)}" class="file-card">
+              <div class="file-icon">📄</div>
+              <div class="file-meta">
+                <div class="file-name">${escapeHtml(m.fileName)}</div>
+                <div class="file-size">${m.fileSize}・タップで保存</div>
+              </div>
+            </a>`;
+        } else {
+          bodyHtml = `<div class="bubble">${escapeHtml(m.text)}</div>`;
+        }
+
+        const avatarHtml = m.isImg ? `<img src="${m.avatar}" />` : m.avatar;
+        const xBadgeHtml = m.xHandle ? `<div class="x-mini-badge">𝕏</div>` : '';
+        const clickHandler = `openUserProfile('${m.senderId}', '${escapeHtml(m.senderName)}', '${m.isImg ? '' : m.avatar}', ${Boolean(m.isImg)}, '${m.role}', '${escapeHtml(m.xHandle || '')}')`;
+
+        if (!isMine) {
+          row.innerHTML = `
+            <div class="avatar-click-wrap" onclick="${clickHandler}">
+              <div class="msg-avatar">${avatarHtml}</div>
+              ${xBadgeHtml}
+            </div>
+            <div class="msg-content-wrap">
+              <div class="msg-sender">${escapeHtml(m.senderName)} ${getRoleBadge(m.role)}</div>
+              <div class="bubble-wrap">${bodyHtml}<div class="msg-time">${m.time}</div></div>
+            </div>`;
+        } else {
+          row.innerHTML = `
+            <div class="avatar-click-wrap" onclick="${clickHandler}">
+              <div class="msg-avatar">${avatarHtml}</div>
+              ${xBadgeHtml}
+            </div>
+            <div class="bubble-wrap">${bodyHtml}<div class="msg-time">${m.time}</div></div>`;
+        }
+        chatArea.appendChild(row);
+      }
+    });
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }
+
+  // テキスト送信
+  document.getElementById('chatForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = document.getElementById('msgInput');
+    const text = input.value.trim();
+    if (!text) return;
+    const ng = checkNg(text);
+    if (ng) {
+      const alertEl = document.getElementById('ngAlert');
+      alertEl.textContent = `⚠️ 禁止ワード「${ng}」は送信できません`;
+      alertEl.classList.add('show');
+      setTimeout(() => alertEl.classList.remove('show'), 2500);
+      return;
+    }
+    const room = getCurrentRoom();
+    room.messages.push({
+      type: 'msg',
+      senderId: state.currentUser.id,
+      senderName: state.currentUser.name,
+      avatar: state.currentUser.avatar,
+      isImg: state.currentUser.isImg,
+      role: getMyRoleInRoom(room),
+      xHandle: state.currentUser.xHandle || '',
+      text: text,
+      time: getTime()
+    });
+    input.value = '';
+    save();
+    renderMessages(room);
+  });
+
+  // チャットメディア送信
+  function handleFileUpload(file, mediaType) {
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) return alert('15MB以下のファイルを選択してください');
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const room = getCurrentRoom();
+      const sizeKb = file.size < 1024 * 1024 ? Math.round(file.size / 1024) + 'KB' : (file.size / (1024 * 1024)).toFixed(1) + 'MB';
+      room.messages.push({
+        type: 'msg',
+        senderId: state.currentUser.id,
+        senderName: state.currentUser.name,
+        avatar: state.currentUser.avatar,
+        isImg: state.currentUser.isImg,
+        role: getMyRoleInRoom(room),
+        xHandle: state.currentUser.xHandle || '',
+        mediaType: mediaType,
+        mediaData: ev.target.result,
+        fileName: file.name,
+        fileSize: sizeKb,
+        time: getTime()
+      });
+      save();
+      renderMessages(room);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  document.getElementById('btnImg').addEventListener('click', () => document.getElementById('imgInput').click());
+  document.getElementById('imgInput').addEventListener('change', (e) => { handleFileUpload(e.target.files[0], 'image'); e.target.value = ''; });
+  document.getElementById('btnVid').addEventListener('click', () => document.getElementById('vidInput').click());
+  document.getElementById('vidInput').addEventListener('change', (e) => { handleFileUpload(e.target.files[0], 'video'); e.target.value = ''; });
+  document.getElementById('btnFile').addEventListener('click', () => document.getElementById('fileInput').click());
+  document.getElementById('fileInput').addEventListener('change', (e) => { handleFileUpload(e.target.files[0], 'file'); e.target.value = ''; });
+
+  // 鍵の切り替え
+  document.getElementById('toggleLockBtn').addEventListener('click', () => {
+    const room = getCurrentRoom();
+    room.isLocked = !room.isLocked;
+    room.messages.push({
+      type: 'system',
+      text: room.isLocked ? '🔒 部屋に鍵をかけました（現在のメンバーと管理人のみ入室可能）' : '🔓 鍵を解除しました'
+    });
+    save();
+    renderAll();
+  });
+
+  // タブ切り替え
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const target = tab.dataset.tab;
+      ['talk', 'note', 'event'].forEach(id => {
+        document.getElementById('tab-' + id).classList.toggle('hidden', id !== target);
+      });
+    });
+  });
+
+  // ノート描画
+  function renderNotes(room) {
+    const list = document.getElementById('noteListEl');
+    list.innerHTML = '';
+    room.notes.slice().reverse().forEach(n => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div style="font-size:11px; color:#64748b; margin-bottom:4px;">投稿者: ${escapeHtml(n.author)}</div>
+        <div class="card-title">${escapeHtml(n.title)}</div>
+        <div class="card-body">${escapeHtml(n.body)}</div>
+        <button onclick="likeNote('${n.id}')" style="background:#f1f5f9; border:none; padding:5px 10px; border-radius:6px; font-size:12px; cursor:pointer;">👍 いいね (${n.likes})</button>
+      `;
+      list.appendChild(card);
+    });
+  }
+  window.likeNote = (id) => {
+    const room = getCurrentRoom();
+    const note = room.notes.find(n => n.id === id);
+    if (note) { note.likes++; save(); renderNotes(room); }
+  };
+  document.getElementById('postNoteBtn').addEventListener('click', () => {
+    const title = document.getElementById('noteTitleInput').value.trim();
+    const body = document.getElementById('noteBodyInput').value.trim();
+    if (!title || !body) return alert('タイトルと本文を入力してください');
+    const room = getCurrentRoom();
+    room.notes.push({ id: 'n_' + Date.now(), author: state.currentUser.name, title, body, likes: 0 });
+    document.getElementById('noteTitleInput').value = '';
+    document.getElementById('noteBodyInput').value = '';
+    save();
+    renderNotes(room);
+  });
+
+  // ==========================================
+  // カレンダー＆イベント描画・詳細モーダル・添付
+  // ==========================================
+  document.getElementById('prevMonthBtn').addEventListener('click', () => {
+    calDate.setMonth(calDate.getMonth() - 1);
+    renderCalendarAndEvents(getCurrentRoom());
+  });
+  document.getElementById('nextMonthBtn').addEventListener('click', () => {
+    calDate.setMonth(calDate.getMonth() + 1);
+    renderCalendarAndEvents(getCurrentRoom());
+  });
+
+  function renderCalendarAndEvents(room) {
+    const year = calDate.getFullYear();
+    const month = calDate.getMonth();
+    document.getElementById('calMonthTitle').textContent = `${year}年 ${month + 1}月`;
+
+    const grid = document.getElementById('calGridEl');
+    grid.innerHTML = '';
+
+    ['日', '月', '火', '水', '木', '金', '土'].forEach(d => {
+      const dow = document.createElement('div');
+      dow.className = 'cal-dow';
+      dow.textContent = d;
+      grid.appendChild(dow);
+    });
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+    // イベントがある日付のセット（YYYY-MM-DD）
+    const eventDates = new Set(room.events.map(e => e.date.split('T')[0]));
+
+    for (let i = 0; i < firstDay; i++) {
+      const empty = document.createElement('div');
+      empty.className = 'cal-cell empty';
+      grid.appendChild(empty);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell';
+      if (dateStr === todayStr) cell.classList.add('today');
+      if (dateStr === selectedDateFilter) cell.classList.add('selected');
+
+      cell.innerHTML = `<span>${d}</span>${eventDates.has(dateStr) ? '<span class="cal-dot"></span>' : ''}`;
+      cell.addEventListener('click', () => {
+        selectedDateFilter = (selectedDateFilter === dateStr) ? null : dateStr;
+        renderCalendarAndEvents(room);
+      });
+      grid.appendChild(cell);
+    }
+
+    const filterStatus = document.getElementById('calFilterStatus');
+    if (selectedDateFilter) {
+      filterStatus.innerHTML = `📅 <strong>${selectedDateFilter}</strong> の予定を表示中（<span style="text-decoration:underline; cursor:pointer;" onclick="clearDateFilter()">すべて表示に戻す</span>）`;
+    } else {
+      filterStatus.textContent = '●印の日付をタップすると予定を絞り込めます';
+    }
+
+    // イベントカード描画
+    const list = document.getElementById('eventListEl');
+    list.innerHTML = '';
+    const filtered = selectedDateFilter
+      ? room.events.filter(e => e.date.startsWith(selectedDateFilter))
+      : room.events;
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<div style="text-align:center; font-size:12px; color:#64748b; padding:12px;">この日のイベントはありません</div>`;
+      return;
+    }
+
+    filtered.slice().sort((a, b) => a.date.localeCompare(b.date)).forEach(ev => {
+      const me = state.currentUser.name;
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.cursor = 'pointer';
+
+      const goingChips = ev.going.length
+        ? ev.going.map(n => `<span class="name-chip">${escapeHtml(n)}</span>`).join('')
+        : '<span style="color:#94a3b8; font-size:11px;">まだいません</span>';
+
+      const maybeChips = ev.maybe.length
+        ? `<div class="participant-row"><span style="font-size:11px; color:#64748b;">🤔 未定(${ev.maybe.length}):</span>${ev.maybe.map(n => `<span class="name-chip maybe">${escapeHtml(n)}</span>`).join('')}</div>`
+        : '';
+
+      const attachBadge = ev.attachType
+        ? `<span style="font-size:10px; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; margin-left:6px;">${ev.attachType === 'image' ? '📷 画像あり' : '📎 ファイルあり'}</span>`
+        : '';
+
+      card.innerHTML = `
+        <div onclick="openEventDetail('${ev.id}')">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:11px; color:#06c755; font-weight:bold;">📅 ${ev.date.replace('T', ' ')}</span>
+            <span style="font-size:11px; color:#64748b;">詳細を見る ＞</span>
+          </div>
+          <div class="card-title" style="margin-top:4px;">${escapeHtml(ev.title)}${attachBadge}</div>
+          ${ev.desc ? `<div style="font-size:12px; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(ev.desc)}</div>` : ''}
+          <div class="participant-box">
+            <div class="participant-row">
+              <span style="font-size:11px; font-weight:bold; color:#0f172a;">🙋 参加(${ev.going.length}人):</span>
+              ${goingChips}
+            </div>
+            ${maybeChips}
+          </div>
+        </div>
+        <div class="rsvp-group" onclick="event.stopPropagation()">
+          <button class="rsvp-btn ${ev.going.includes(me) ? 'selected' : ''}" onclick="setRsvp('${ev.id}','going')">🙋 参加</button>
+          <button class="rsvp-btn ${ev.maybe.includes(me) ? 'selected' : ''}" onclick="setRsvp('${ev.id}','maybe')">🤔 未定</button>
+          <button class="rsvp-btn ${ev.notGoing.includes(me) ? 'selected' : ''}" onclick="setRsvp('${ev.id}','notGoing')">🙅 不参加</button>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  }
+
+  window.clearDateFilter = () => {
+    selectedDateFilter = null;
+    renderCalendarAndEvents(getCurrentRoom());
+  };
+
+  // イベント詳細モーダルを開く
+  window.openEventDetail = (id) => {
+    const room = getCurrentRoom();
+    const ev = room.events.find(e => e.id === id);
+    if (!ev) return;
+
+    document.getElementById('evDetailDate').textContent = '📅 ' + ev.date.replace('T', ' ');
+    document.getElementById('evDetailTitle').textContent = ev.title;
+    document.getElementById('evDetailDesc').textContent = ev.desc || '（詳細メモはありません）';
+
+    const attachArea = document.getElementById('evDetailAttachArea');
+    if (ev.attachType === 'image') {
+      attachArea.innerHTML = `<img src="${ev.attachData}" style="width:100%; max-height:240px; object-fit:contain; border-radius:10px; background:#000;" />`;
+    } else if (ev.attachType === 'file') {
+      attachArea.innerHTML = `
+        <a href="${ev.attachData}" download="${escapeHtml(ev.attachName)}" class="file-card" style="max-width:100%;">
+          <div class="file-icon">📄</div>
+          <div class="file-meta">
+            <div class="file-name">${escapeHtml(ev.attachName)}</div>
+            <div class="file-size">${ev.attachSize}・タップして保存</div>
+          </div>
+        </a>`;
+    } else {
+      attachArea.innerHTML = '';
+    }
+
+    const membersHtml = `
+      <div class="participant-row" style="margin-bottom:6px;">
+        <span style="font-weight:bold;">🙋 参加 (${ev.going.length}人):</span>
+        ${ev.going.length ? ev.going.map(n => `<span class="name-chip">${escapeHtml(n)}</span>`).join('') : '<span style="color:#94a3b8;">なし</span>'}
+      </div>
+      <div class="participant-row" style="margin-bottom:6px;">
+        <span style="font-weight:bold;">🤔 未定 (${ev.maybe.length}人):</span>
+        ${ev.maybe.length ? ev.maybe.map(n => `<span class="name-chip maybe">${escapeHtml(n)}</span>`).join('') : '<span style="color:#94a3b8;">なし</span>'}
+      </div>
+      <div class="participant-row">
+        <span style="font-weight:bold;">🙅 不参加 (${ev.notGoing.length}人):</span>
+        <span style="color:#64748b;">${ev.notGoing.length ? ev.notGoing.map(n => escapeHtml(n)).join('、') : 'なし'}</span>
+      </div>
+    `;
+    document.getElementById('evDetailMembers').innerHTML = membersHtml;
+    document.getElementById('eventDetailModal').classList.remove('hidden');
+  };
+
+  document.getElementById('closeEvDetailBtn').addEventListener('click', () => {
+    document.getElementById('eventDetailModal').classList.add('hidden');
+  });
+
+  // イベントへの画像・ファイル添付処理
+  function handleEvAttach(file, type) {
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) return alert('15MB以下のファイルを選択してください');
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const sizeKb = file.size < 1024 * 1024 ? Math.round(file.size / 1024) + 'KB' : (file.size / (1024 * 1024)).toFixed(1) + 'MB';
+      pendingEvAttach = {
+        type: type,
+        data: ev.target.result,
+        name: file.name,
+        size: sizeKb
+      };
+      document.getElementById('evAttachPreview').textContent = `✅ 添付済み: ${file.name} (${sizeKb})`;
+    };
+    reader.readAsDataURL(file);
+  }
+  document.getElementById('evAttachImgBtn').addEventListener('click', () => document.getElementById('evImgInput').click());
+  document.getElementById('evImgInput').addEventListener('change', (e) => { handleEvAttach(e.target.files[0], 'image'); e.target.value = ''; });
+  document.getElementById('evAttachFileBtn').addEventListener('click', () => document.getElementById('evFileInput').click());
+  document.getElementById('evFileInput').addEventListener('change', (e) => { handleEvAttach(e.target.files[0], 'file'); e.target.value = ''; });
+
+  window.setRsvp = (id, status) => {
+    const room = getCurrentRoom();
+    const ev = room.events.find(e => e.id === id);
+    const me = state.currentUser.name;
+    if (!ev) return;
+    ev.going = ev.going.filter(x => x !== me);
+    ev.maybe = ev.maybe.filter(x => x !== me);
+    ev.notGoing = ev.notGoing.filter(x => x !== me);
+    ev[status].push(me);
+    save();
+    renderCalendarAndEvents(room);
+  };
+
+  document.getElementById('postEventBtn').addEventListener('click', () => {
+    const title = document.getElementById('eventTitleInput').value.trim();
+    const date = document.getElementById('eventDateInput').value;
+    const desc = document.getElementById('eventDescInput').value.trim();
+    if (!title || !date) return alert('イベント名と日時を入力してください');
+
+    const room = getCurrentRoom();
+    room.events.push({
+      id: 'e_' + Date.now(),
+      title,
+      date,
+      desc,
+      attachType: pendingEvAttach ? pendingEvAttach.type : null,
+      attachData: pendingEvAttach ? pendingEvAttach.data : null,
+      attachName: pendingEvAttach ? pendingEvAttach.name : '',
+      attachSize: pendingEvAttach ? pendingEvAttach.size : '',
+      going: [state.currentUser.name],
+      maybe: [],
+      notGoing: []
+    });
+
+    document.getElementById('eventTitleInput').value = '';
+    document.getElementById('eventDescInput').value = '';
+    pendingEvAttach = null;
+    document.getElementById('evAttachPreview').textContent = '';
+    save();
+    renderCalendarAndEvents(room);
+  });
+
+  // ルーム一覧ドロワー
+  document.getElementById('menuBtn').addEventListener('click', () => {
+    const listEl = document.getElementById('roomListEl');
+    listEl.innerHTML = '';
+    const isGlobalAdmin = state.currentUser.id === state.creatorId;
+    const visibleRooms = state.rooms.filter(r => isGlobalAdmin || r.members.some(m => m.id === state.currentUser.id));
+
+    visibleRooms.forEach(r => {
+      const div = document.createElement('div');
+      div.className = `room-item ${r.id === state.currentRoomId ? 'active' : ''}`;
+      div.innerHTML = `
+        <div style="font-size:14px; font-weight:bold;">${r.isLocked ? '🔒 ' : '💬 '}${escapeHtml(r.name)}</div>
+        <div style="font-size:11px; color:#64748b; margin-top:3px;">メンバー: ${r.members.length}人 ・ 履歴: ${r.messages.length}件</div>
+      `;
+      div.addEventListener('click', () => {
+        state.currentRoomId = r.id;
+        save();
+        renderAll();
+        closeDrawer();
+      });
+      listEl.appendChild(div);
+    });
+    document.getElementById('roomDrawer').classList.add('open');
+    document.getElementById('drawerOverlay').classList.add('open');
+  });
+
+  const closeDrawer = () => {
+    document.getElementById('roomDrawer').classList.remove('open');
+    document.getElementById('drawerOverlay').classList.remove('open');
+  };
+  document.getElementById('closeDrawerBtn').addEventListener('click', closeDrawer);
+  document.getElementById('drawerOverlay').addEventListener('click', closeDrawer);
+
+  // 管理人による新規ルーム作成
+  document.getElementById('createRoomBtn').addEventListener('click', () => {
+    const name = document.getElementById('newRoomNameInput').value.trim();
+    if (!name) return alert('部屋名を入力してください');
