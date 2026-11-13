@@ -1,6 +1,6 @@
 {
-  "name": "オープンチャット",
-  "short_name": "オプチャ",
+  "name": "みやチャット",
+  "short_name": "みやチャット",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#8cabd9",
