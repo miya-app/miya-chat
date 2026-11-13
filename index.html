@@ -201,8 +201,6 @@
       width: 20px; height: 20px; font-size: 11px; line-height: 1; cursor: pointer; flex-shrink: 0;
     }
 
-    .ng-alert { background: #ef4444; color: #fff; font-size: 12px; padding: 7px; text-align: center; font-weight: bold; display: none; }
-    .ng-alert.show { display: block; }
     .input-area { background: #ffffff; padding: 8px; display: flex; gap: 5px; align-items: center; }
     .attach-btn {
       background: #f1f5f9; border: none; border-radius: 50%; width: 34px; height: 34px;
@@ -627,7 +625,6 @@
   <!-- タブ1：トーク -->
   <div class="tab-pane" id="tab-talk">
     <div class="chat-area" id="chatArea"></div>
-    <div class="ng-alert" id="ngAlert">⚠️ 禁止ワードが含まれています</div>
     <form class="input-area" id="chatForm">
       <input type="file" id="imgInput" accept="image/*" style="display:none;" />
       <input type="file" id="vidInput" accept="video/*" style="display:none;" />
@@ -731,7 +728,6 @@
 </div>
 
 <script>
-  const NG_WORDS = ['バカ', 'アホ', '死ね', '荒らし', 'LINE交換', '出会い'];
   const DB_NAME = 'miyachat_large_db';
   const STORE_NAME = 'app_state';
   const LEGACY_KEYS = ['miyachat_v9', 'miyachat_v8', 'miyachat_v7', 'opchat_final_v6', 'opchat_final_v5'];
@@ -825,7 +821,6 @@
   let editingEventId = null;
   let editingEventAttach = null;
 
-  // トークメッセージ操作対象インデックス
   let activeChatMsgIndex = null;
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -854,10 +849,6 @@
   function getTime() {
     const d = new Date();
     return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-  }
-
-  function checkNg(text) {
-    return NG_WORDS.find(w => text.toLowerCase().includes(w.toLowerCase()));
   }
 
   function formatXUrl(raw) {
@@ -1008,9 +999,7 @@
     document.getElementById('lightboxImgEl').src = '';
   };
 
-  // ==========================================
   // 初回入室画面
-  // ==========================================
   const xSyncToggle = document.getElementById('xSyncToggle');
   const xInputWrap = document.getElementById('xInputWrap');
   xSyncToggle.addEventListener('change', () => {
@@ -1031,7 +1020,6 @@
   document.getElementById('joinBtn').addEventListener('click', () => {
     const name = document.getElementById('nicknameInput').value.trim();
     if (!name) return alert('ニックネームを入力してください');
-    if (checkNg(name)) return alert('禁止ワードが含まれています');
 
     let xHandle = '';
     if (xSyncToggle.checked) {
@@ -1073,9 +1061,7 @@
     if (isAdminDirectUrl) openAdminAuthModal();
   });
 
-  // ==========================================
   // 自分のプロフィール編集画面
-  // ==========================================
   const editProfileXToggle = document.getElementById('editProfileXToggle');
   const editProfileXInputWrap = document.getElementById('editProfileXInputWrap');
   editProfileXToggle.addEventListener('change', () => {
@@ -1120,7 +1106,6 @@
   document.getElementById('saveMyProfileBtn').addEventListener('click', () => {
     const newName = document.getElementById('editNicknameInput').value.trim();
     if (!newName) return alert('ニックネームを入力してください');
-    if (checkNg(newName)) return alert('禁止ワードが含まれています');
 
     let newX = '';
     if (editProfileXToggle.checked) {
@@ -1170,9 +1155,7 @@
     alert('プロフィールを更新しました！');
   });
 
-  // ==========================================
   // 管理画面パスワード認証＆コントロール画面
-  // ==========================================
   function openAdminAuthModal() {
     document.getElementById('adminPasswordInput').value = '';
     document.getElementById('sendAdminMailLink').href = buildAdminMailtoHref();
@@ -1387,9 +1370,7 @@
     renderAll();
   });
 
-  // ==========================================
   // 一般メンバー用グループ作成画面
-  // ==========================================
   document.getElementById('openUserCreateGroupBtn').addEventListener('click', () => {
     closeDrawer();
     document.getElementById('userPermissionGateBox').classList.remove('hidden');
@@ -1459,9 +1440,7 @@
     renderAll();
   });
 
-  // ==========================================
   // 共通添付レンダリング
-  // ==========================================
   function renderAttachmentHtml(type, data, name, size) {
     if (!type || !data) return '';
     if (type === 'image') {
@@ -1489,9 +1468,7 @@
     return '';
   }
 
-  // ==========================================
   // 全体描画
-  // ==========================================
   function renderAll() {
     const room = getCurrentRoom();
     const myRole = getMyRoleInRoom(room);
@@ -1512,9 +1489,7 @@
     alert(`招待URLをコピーしました！\n\n${url}`);
   });
 
-  // ==========================================
-  // トーク機能（編集＆送信取り消し対応）
-  // ==========================================
+  // トーク機能
   window.openMsgActionModal = (index) => {
     const room = getCurrentRoom();
     const m = room.messages[index];
@@ -1550,8 +1525,6 @@
 
     const newText = document.getElementById('editChatMsgTextarea').value.trim();
     if (!newText) return alert('メッセージを入力してください（消す場合は「送信を取り消す」を押してください）');
-    const ng = checkNg(newText);
-    if (ng) return alert(`禁止ワード「${ng}」は含められません`);
 
     m.text = newText;
     m.edited = true;
@@ -1661,14 +1634,7 @@
     const input = document.getElementById('msgInput');
     const text = input.value.trim();
     if (!text) return;
-    const ng = checkNg(text);
-    if (ng) {
-      const alertEl = document.getElementById('ngAlert');
-      alertEl.textContent = `⚠️ 禁止ワード「${ng}」は送信できません`;
-      alertEl.classList.add('show');
-      setTimeout(() => alertEl.classList.remove('show'), 2500);
-      return;
-    }
+
     const room = getCurrentRoom();
     room.messages.push({
       type: 'msg',
@@ -1714,9 +1680,7 @@
   document.getElementById('btnFile').addEventListener('click', () => document.getElementById('fileInput').click());
   document.getElementById('fileInput').addEventListener('change', (e) => { handleChatUpload(e.target.files[0], 'file'); e.target.value = ''; });
 
-  // ==========================================
   // プロフィール＆Xジャンプモーダル
-  // ==========================================
   window.openUserProfile = (userId, fallbackName, fallbackAvatar, fallbackIsImg, fallbackRole, fallbackX) => {
     const room = getCurrentRoom();
     const member = room.members.find(m => m.id === userId) || {
@@ -1750,9 +1714,7 @@
     document.getElementById('userProfileModal').classList.add('hidden');
   });
 
-  // ==========================================
   // タブ切り替え
-  // ==========================================
   document.querySelectorAll('.nav-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -1764,9 +1726,7 @@
     });
   });
 
-  // ==========================================
   // ノート機能
-  // ==========================================
   document.getElementById('noteAttachImgBtn').addEventListener('click', () => document.getElementById('noteImgInput').click());
   document.getElementById('noteImgInput').addEventListener('change', (e) => {
     readAttachFile(e.target.files[0], 'image', (res) => {
@@ -1935,9 +1895,7 @@
     renderNotes(room);
   });
 
-  // ==========================================
   // カレンダー＆イベント機能
-  // ==========================================
   document.getElementById('prevMonthBtn').addEventListener('click', () => {
     calDate.setMonth(calDate.getMonth() - 1);
     renderCalendarAndEvents(getCurrentRoom());
@@ -2333,9 +2291,7 @@
     renderCalendarAndEvents(room);
   });
 
-  // ==========================================
   // ルーム一覧ドロワー
-  // ==========================================
   document.getElementById('menuBtn').addEventListener('click', () => {
     const listEl = document.getElementById('roomListEl');
     listEl.innerHTML = '';
@@ -2368,9 +2324,7 @@
   document.getElementById('closeDrawerBtn').addEventListener('click', closeDrawer);
   document.getElementById('drawerOverlay').addEventListener('click', closeDrawer);
 
-  // ==========================================
   // 起動時初期化
-  // ==========================================
   (async function initApp() {
     LEGACY_KEYS.forEach(k => {
       try { localStorage.removeItem(k); } catch (e) {}
