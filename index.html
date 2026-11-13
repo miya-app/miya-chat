@@ -26,7 +26,6 @@
     .auto-link { color: #0284c7; text-decoration: underline; word-break: break-all; font-weight: bold; }
     .mine .bubble .auto-link { color: #0369a1; }
 
-    /* 申し込みフォーム専用ボタン */
     .form-apply-btn {
       display: flex; justify-content: center; align-items: center; gap: 6px;
       width: 100%; padding: 9px 12px; background-color: #06c755; color: #ffffff;
@@ -103,6 +102,10 @@
       background: #fee2e2; color: #dc2626; border: 1px solid #fecaca;
       padding: 5px 9px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;
     }
+    .danger-full-btn {
+      width: 100%; padding: 11px; background: #fee2e2; color: #dc2626;
+      border: 1px solid #fecaca; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 8px;
+    }
     .edit-mini-btn {
       background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;
       padding: 5px 9px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;
@@ -176,6 +179,7 @@
       padding: 9px 13px; border-radius: 16px; font-size: 14px; line-height: 1.4;
       word-break: break-word; white-space: pre-wrap; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
+    .bubble.editable { cursor: pointer; }
     .others .bubble { background-color: #ffffff; color: #1e293b; border-top-left-radius: 4px; }
     .mine .bubble { background-color: #8de055; color: #0f172a; border-top-right-radius: 4px; }
 
@@ -191,7 +195,11 @@
     .file-meta { overflow: hidden; }
     .file-name { font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .file-size { font-size: 10px; color: #64748b; margin-top: 2px; }
-    .msg-time { font-size: 10px; color: #f1f5f9; white-space: nowrap; }
+    .msg-time { font-size: 10px; color: #f1f5f9; white-space: nowrap; text-align: right; line-height: 1.2; }
+    .msg-menu-btn {
+      background: rgba(0,0,0,0.24); color: #fff; border: none; border-radius: 50%;
+      width: 20px; height: 20px; font-size: 11px; line-height: 1; cursor: pointer; flex-shrink: 0;
+    }
 
     .ng-alert { background: #ef4444; color: #fff; font-size: 12px; padding: 7px; text-align: center; font-weight: bold; display: none; }
     .ng-alert.show { display: block; }
@@ -280,6 +288,20 @@
   <div class="img-lightbox hidden" id="imgLightbox" onclick="closeImageViewer()">
     <button class="lightbox-close" onclick="closeImageViewer()">× 閉じる</button>
     <img id="lightboxImgEl" src="" alt="拡大画像" onclick="event.stopPropagation()" />
+  </div>
+
+  <!-- トーク編集・送信取り消しモーダル -->
+  <div class="modal-overlay hidden" id="msgActionModal">
+    <div class="modal-box">
+      <div style="font-size:15px; font-weight:bold; color:#0f172a; margin-bottom:10px; text-align:center;">💬 メッセージの操作</div>
+      <div id="msgEditSection">
+        <label class="field-label">メッセージを編集</label>
+        <textarea id="editChatMsgTextarea" class="textarea-input" rows="3" placeholder="メッセージを入力"></textarea>
+        <button id="saveEditedChatMsgBtn" class="primary-btn">✏️ 編集内容を保存する</button>
+      </div>
+      <button id="unsendChatMsgBtn" class="danger-full-btn">🗑️ 送信を取り消す（全員から消去）</button>
+      <button id="closeMsgActionModalBtn" class="secondary-btn">キャンセル</button>
+    </div>
   </div>
 
   <!-- 1. 初回入室・プロフィール設定画面 -->
@@ -377,7 +399,7 @@
     </div>
   </div>
 
-  <!-- 4. イベント編集モーダル（申し込みフォームURL欄付き） -->
+  <!-- 4. イベント編集モーダル -->
   <div class="modal-overlay hidden" id="editEventModal">
     <div class="modal-box">
       <div style="font-size:16px; font-weight:bold; color:#0f172a; margin-bottom:10px;">✏️ イベントを編集</div>
@@ -803,6 +825,9 @@
   let editingEventId = null;
   let editingEventAttach = null;
 
+  // トークメッセージ操作対象インデックス
+  let activeChatMsgIndex = null;
+
   const urlParams = new URLSearchParams(window.location.search);
   const invitedRoomId = urlParams.get('room');
   const isAdminDirectUrl = urlParams.get('admin') === '1';
@@ -818,7 +843,6 @@
     });
   }
 
-  // URL文字列の安全な整形（https:// 等で始まる場合のみ有効なリンクに）
   function normalizeHttpUrl(raw) {
     if (!raw) return '';
     const s = raw.trim();
@@ -1489,12 +1513,81 @@
   });
 
   // ==========================================
-  // トーク機能
+  // トーク機能（編集＆送信取り消し対応）
   // ==========================================
+  window.openMsgActionModal = (index) => {
+    const room = getCurrentRoom();
+    const m = room.messages[index];
+    if (!m || m.type !== 'msg') return;
+
+    const isMine = m.senderId === state.currentUser.id;
+    const role = getMyRoleInRoom(room);
+    const isAdmin = (role === 'admin' || role === 'co-admin');
+
+    if (!isMine && !isAdmin) return;
+
+    activeChatMsgIndex = index;
+    const editSec = document.getElementById('msgEditSection');
+    if (isMine && !m.mediaType) {
+      editSec.style.display = 'block';
+      document.getElementById('editChatMsgTextarea').value = m.text || '';
+    } else {
+      editSec.style.display = 'none';
+    }
+    document.getElementById('msgActionModal').classList.remove('hidden');
+  };
+
+  document.getElementById('closeMsgActionModalBtn').addEventListener('click', () => {
+    document.getElementById('msgActionModal').classList.add('hidden');
+    activeChatMsgIndex = null;
+  });
+
+  document.getElementById('saveEditedChatMsgBtn').addEventListener('click', () => {
+    if (activeChatMsgIndex === null) return;
+    const room = getCurrentRoom();
+    const m = room.messages[activeChatMsgIndex];
+    if (!m || m.senderId !== state.currentUser.id) return;
+
+    const newText = document.getElementById('editChatMsgTextarea').value.trim();
+    if (!newText) return alert('メッセージを入力してください（消す場合は「送信を取り消す」を押してください）');
+    const ng = checkNg(newText);
+    if (ng) return alert(`禁止ワード「${ng}」は含められません`);
+
+    m.text = newText;
+    m.edited = true;
+    save();
+    document.getElementById('msgActionModal').classList.add('hidden');
+    activeChatMsgIndex = null;
+    renderMessages(room);
+  });
+
+  document.getElementById('unsendChatMsgBtn').addEventListener('click', () => {
+    if (activeChatMsgIndex === null) return;
+    const room = getCurrentRoom();
+    const m = room.messages[activeChatMsgIndex];
+    if (!m) return;
+
+    if (!confirm('このメッセージの送信を取り消しますか？（全員の画面から消去されます）')) return;
+
+    const isMine = m.senderId === state.currentUser.id;
+    const noticeText = isMine
+      ? `${state.currentUser.name} がメッセージの送信を取り消しました`
+      : `管理人が ${m.senderName} のメッセージを削除しました`;
+
+    room.messages[activeChatMsgIndex] = { type: 'system', text: noticeText };
+    save();
+    document.getElementById('msgActionModal').classList.add('hidden');
+    activeChatMsgIndex = null;
+    renderMessages(room);
+  });
+
   function renderMessages(room) {
     const chatArea = document.getElementById('chatArea');
     chatArea.innerHTML = '';
-    room.messages.forEach(m => {
+    const role = getMyRoleInRoom(room);
+    const isAdmin = (role === 'admin' || role === 'co-admin');
+
+    room.messages.forEach((m, idx) => {
       if (m.type === 'system') {
         const div = document.createElement('div');
         div.className = 'system-msg';
@@ -1507,6 +1600,7 @@
         chatArea.appendChild(div);
       } else {
         const isMine = m.senderId === state.currentUser.id;
+        const canControl = isMine || isAdmin;
         const row = document.createElement('div');
         row.className = `msg-row ${isMine ? 'mine' : 'others'}`;
 
@@ -1525,8 +1619,14 @@
               </div>
             </a>`;
         } else {
-          bodyHtml = `<div class="bubble">${linkifyText(m.text)}</div>`;
+          const clickAttr = canControl ? `onclick="openMsgActionModal(${idx})"` : '';
+          bodyHtml = `<div class="bubble ${canControl ? 'editable' : ''}" ${clickAttr}>${linkifyText(m.text)}</div>`;
         }
+
+        const editedLabel = m.edited ? `<div style="font-size:9px; opacity:0.85;">(編集済)</div>` : '';
+        const menuDotBtn = canControl
+          ? `<button type="button" class="msg-menu-btn" onclick="openMsgActionModal(${idx})" title="編集・取り消し">⋯</button>`
+          : '';
 
         const avatarHtml = m.isImg ? `<img src="${m.avatar}" />` : m.avatar;
         const xBadgeHtml = m.xHandle ? `<div class="x-mini-badge">𝕏</div>` : '';
@@ -1540,7 +1640,7 @@
             </div>
             <div class="msg-content-wrap">
               <div class="msg-sender">${escapeHtml(m.senderName)} ${getRoleBadge(m.role)}</div>
-              <div class="bubble-wrap">${bodyHtml}<div class="msg-time">${m.time}</div></div>
+              <div class="bubble-wrap">${bodyHtml}<div class="msg-time">${editedLabel}${m.time}</div>${menuDotBtn}</div>
             </div>`;
         } else {
           row.innerHTML = `
@@ -1548,7 +1648,7 @@
               <div class="msg-avatar">${avatarHtml}</div>
               ${xBadgeHtml}
             </div>
-            <div class="bubble-wrap">${bodyHtml}<div class="msg-time">${m.time}</div></div>`;
+            <div class="bubble-wrap">${bodyHtml}<div class="msg-time">${editedLabel}${m.time}</div>${menuDotBtn}</div>`;
         }
         chatArea.appendChild(row);
       }
@@ -1836,7 +1936,7 @@
   });
 
   // ==========================================
-  // カレンダー＆イベント機能（申し込みフォームURL対応）
+  // カレンダー＆イベント機能
   // ==========================================
   document.getElementById('prevMonthBtn').addEventListener('click', () => {
     calDate.setMonth(calDate.getMonth() - 1);
