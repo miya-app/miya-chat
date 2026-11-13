@@ -8,6 +8,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="apple-touch-icon" href="./icon.png" />
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').catch(() => {});
@@ -118,20 +120,29 @@
     }
 
     .header {
-      background-color: #222e42; color: white; padding: 10px 10px;
-      display: flex; justify-content: space-between; align-items: center; z-index: 10; gap: 5px;
+      background-color: #222e42; color: white; padding: 10px 8px;
+      display: flex; justify-content: space-between; align-items: center; z-index: 10; gap: 4px;
     }
-    .header-left { display: flex; align-items: center; gap: 6px; overflow: hidden; }
-    .header-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .header-left { display: flex; align-items: center; gap: 5px; overflow: hidden; }
+    .header-right { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
     .icon-btn {
       background: rgba(255,255,255,0.16); color: white; border: none;
-      padding: 6px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; white-space: nowrap; font-weight: bold;
+      padding: 6px 7px; border-radius: 6px; font-size: 11px; cursor: pointer; white-space: nowrap; font-weight: bold;
     }
     .icon-btn.admin-btn { background: #f59e0b; color: #0f172a; }
     .icon-btn.invite-btn { background: #06c755; }
+    .icon-btn.notify-on { background: #3b82f6; }
     .room-info { display: flex; flex-direction: column; overflow: hidden; }
     .room-name { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .room-sub { font-size: 10px; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .inapp-toast {
+      position: absolute; top: 52px; left: 12px; right: 12px;
+      background: #0f172a; color: #fff; padding: 10px 14px; border-radius: 10px;
+      font-size: 12px; font-weight: bold; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      display: none; border-left: 4px solid #06c755;
+    }
+    .inapp-toast.show { display: block; }
 
     .nav-tabs { display: flex; background: #ffffff; border-bottom: 1px solid #e2e8f0; z-index: 9; }
     .nav-tab {
@@ -282,13 +293,13 @@
 <body>
 
 <div class="app-container">
-  <!-- 画像拡大表示ライトボックス -->
+  <div class="inapp-toast" id="inappToast"></div>
+
   <div class="img-lightbox hidden" id="imgLightbox" onclick="closeImageViewer()">
     <button class="lightbox-close" onclick="closeImageViewer()">× 閉じる</button>
     <img id="lightboxImgEl" src="" alt="拡大画像" onclick="event.stopPropagation()" />
   </div>
 
-  <!-- トーク編集・送信取り消しモーダル -->
   <div class="modal-overlay hidden" id="msgActionModal">
     <div class="modal-box">
       <div style="font-size:15px; font-weight:bold; color:#0f172a; margin-bottom:10px; text-align:center;">💬 メッセージの操作</div>
@@ -302,7 +313,6 @@
     </div>
   </div>
 
-  <!-- 1. 初回入室・プロフィール設定画面 -->
   <div class="full-screen" id="joinScreen" style="justify-content:center; padding:24px; text-align:center;">
     <div style="font-size: 19px; font-weight: bold; color: #0f172a; margin-bottom: 4px;">みやチャット参加設定</div>
     <div style="font-size: 12px; color: #64748b; margin-bottom: 14px;" id="joinRoomNotice">
@@ -334,7 +344,6 @@
     <button id="joinBtn" class="primary-btn">トークに参加する</button>
   </div>
 
-  <!-- 2. 自分のプロフィール編集画面 -->
   <div class="full-screen hidden" id="myProfileEditScreen">
     <div class="screen-header">
       <span>👤 プロフィール設定</span>
@@ -370,7 +379,6 @@
     </div>
   </div>
 
-  <!-- 3. ノート編集モーダル -->
   <div class="modal-overlay hidden" id="editNoteModal">
     <div class="modal-box">
       <div style="font-size:16px; font-weight:bold; color:#0f172a; margin-bottom:10px;">✏️ ノートを編集</div>
@@ -397,7 +405,6 @@
     </div>
   </div>
 
-  <!-- 4. イベント編集モーダル -->
   <div class="modal-overlay hidden" id="editEventModal">
     <div class="modal-box">
       <div style="font-size:16px; font-weight:bold; color:#0f172a; margin-bottom:10px;">✏️ イベントを編集</div>
@@ -444,7 +451,6 @@
     </div>
   </div>
 
-  <!-- 5. 管理画面パスワード認証モーダル -->
   <div class="modal-overlay hidden" id="adminAuthModal">
     <div class="modal-box" style="text-align: center;">
       <div style="font-size: 30px; margin-bottom: 6px;">🔐</div>
@@ -459,7 +465,6 @@
     </div>
   </div>
 
-  <!-- 6. 管理人専用コントロール画面 -->
   <div class="full-screen hidden" id="adminDashboardScreen">
     <div class="screen-header">
       <span>⚙️ 管理人専用コントロール画面</span>
@@ -502,7 +507,6 @@
           権限（管理人・共同管理人・リーダー・メンバー）の変更や、メンバーの削除ができます。
         </div>
         <div id="adminManageMemberList" style="border:1px solid #e2e8f0; border-radius:8px; background:#fff;"></div>
-        <button id="adminSimFriendBtn" class="secondary-btn" style="background:#e0f2fe; color:#0369a1;">＋ テスト用に新しいメンバーを1人入室させる</button>
       </div>
 
       <div class="card">
@@ -516,13 +520,12 @@
       </div>
 
       <div class="card">
-        <div class="card-title">💾 ストレージ使用状況（大容量IndexedDB対応）</div>
-        <div id="storageUsageText" style="font-size:12px; color:#475569;">確認中...</div>
+        <div class="card-title">☁️ Firebaseリアルタイム同期ステータス</div>
+        <div id="firebaseSyncStatus" style="font-size:12px; color:#047857; font-weight:bold;">接続確認中...</div>
       </div>
     </div>
   </div>
 
-  <!-- 7. 一般メンバー用グループ作成画面 -->
   <div class="full-screen hidden" id="createGroupScreen">
     <div class="screen-header">
       <span>💬 新しいグループを作成</span>
@@ -558,7 +561,6 @@
     </div>
   </div>
 
-  <!-- 8. イベント詳細モーダル -->
   <div class="modal-overlay hidden" id="eventDetailModal">
     <div class="modal-box">
       <div style="font-size: 12px; color: #06c755; font-weight: bold;" id="evDetailDate">📅 2026-11-20</div>
@@ -574,7 +576,6 @@
     </div>
   </div>
 
-  <!-- 9. プロフィール＆Xアカウントジャンプモーダル -->
   <div class="modal-overlay hidden" id="userProfileModal">
     <div class="modal-box" style="text-align: center; align-items: center;">
       <div class="avatar-preview" id="profileModalAvatar" style="width: 72px; height: 72px; margin-bottom: 10px;">🐱</div>
@@ -586,7 +587,6 @@
     </div>
   </div>
 
-  <!-- 10. ルーム一覧ドロワー -->
   <div class="drawer-overlay" id="drawerOverlay"></div>
   <div class="room-drawer" id="roomDrawer">
     <div style="background:#222e42; color:#fff; padding:14px 16px; font-weight:bold; display:flex; justify-content:space-between; align-items:center;">
@@ -599,30 +599,28 @@
     </div>
   </div>
 
-  <!-- メインヘッダー -->
   <div class="header">
     <div class="header-left">
       <button id="menuBtn" class="icon-btn">≡ 部屋</button>
       <div class="room-info">
         <div class="room-name" id="headerRoomName">雑談メインルーム</div>
-        <div class="room-sub" id="headerUserStatus">読み込み中...</div>
+        <div class="room-sub" id="headerUserStatus">同期中...</div>
       </div>
     </div>
     <div class="header-right">
-      <button id="openMyProfileBtn" class="icon-btn">👤 プロフ</button>
-      <button id="quickInviteBtn" class="icon-btn invite-btn">🔗 招待</button>
-      <button id="openAdminScreenBtn" class="icon-btn admin-btn">⚙️ 管理</button>
+      <button id="notifyToggleBtn" class="icon-btn">🔔 通知</button>
+      <button id="openMyProfileBtn" class="icon-btn">👤</button>
+      <button id="quickInviteBtn" class="icon-btn invite-btn">🔗</button>
+      <button id="openAdminScreenBtn" class="icon-btn admin-btn">⚙️</button>
     </div>
   </div>
 
-  <!-- 3タブメニュー -->
   <div class="nav-tabs">
     <button class="nav-tab active" data-tab="talk">💬 トーク</button>
     <button class="nav-tab" data-tab="note">📝 ノート</button>
     <button class="nav-tab" data-tab="event">📅 イベント</button>
   </div>
 
-  <!-- タブ1：トーク -->
   <div class="tab-pane" id="tab-talk">
     <div class="chat-area" id="chatArea"></div>
     <form class="input-area" id="chatForm">
@@ -637,7 +635,6 @@
     </form>
   </div>
 
-  <!-- タブ2：ノート -->
   <div class="tab-pane hidden" id="tab-note">
     <div class="board-area">
       <div class="card">
@@ -661,7 +658,6 @@
     </div>
   </div>
 
-  <!-- タブ3：カレンダー＆イベント -->
   <div class="tab-pane hidden" id="tab-event">
     <div class="board-area">
       <div class="card">
@@ -728,59 +724,31 @@
 </div>
 
 <script>
-  const DB_NAME = 'miyachat_large_db';
-  const STORE_NAME = 'app_state';
-  const LEGACY_KEYS = ['miyachat_v9', 'miyachat_v8', 'miyachat_v7', 'opchat_final_v6', 'opchat_final_v5'];
+  const firebaseConfig = {
+    apiKey: "AIzaSyBDVBM72ZS8AVQv3GNF4ddgkPW8Vs15liM",
+    authDomain: "miyachat-e5fd8.firebaseapp.com",
+    databaseURL: "https://miyachat-e5fd8-default-rtdb.firebaseio.com",
+    projectId: "miyachat-e5fd8",
+    storageBucket: "miyachat-e5fd8.firebasestorage.app",
+    messagingSenderId: "499800465396",
+    appId: "1:499800465396:web:222415c67701b11b0223a1"
+  };
 
-  function openDB() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, 1);
-      req.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          db.createObjectStore(STORE_NAME);
-        }
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
+  let dbRef = null;
+  let isFirebaseConnected = false;
+  try {
+    firebase.initializeApp(firebaseConfig);
+    dbRef = firebase.database().ref('miyachat_shared_v1');
+    isFirebaseConnected = true;
+  } catch (e) {
+    console.error('Firebase init error:', e);
   }
 
-  async function loadStateFromDB() {
-    try {
-      const db = await openDB();
-      return await new Promise((resolve) => {
-        const tx = db.transaction(STORE_NAME, 'readonly');
-        const store = tx.objectStore(STORE_NAME);
-        const getReq = store.get('main');
-        getReq.onsuccess = () => resolve(getReq.result || null);
-        getReq.onerror = () => resolve(null);
-      });
-    } catch (e) {
-      return null;
-    }
-  }
+  const LOCAL_USER_KEY = 'miyachat_my_profile_v1';
 
-  async function saveStateToDB(data) {
-    try {
-      const db = await openDB();
-      await new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, 'readwrite');
-        const store = tx.objectStore(STORE_NAME);
-        const putReq = store.put(data, 'main');
-        putReq.onsuccess = () => resolve();
-        putReq.onerror = () => reject(putReq.error);
-      });
-    } catch (e) {
-      alert('端末の空きストレージが不足しています。不要な動画・ファイルを削除してください。');
-    }
-  }
-
-  function getInitialState() {
+  function getDefaultSharedState() {
     return {
       creatorId: null,
-      currentUser: null,
-      currentRoomId: 'room_main',
       adminPassword: '9696',
       adminEmail: 'miyairi1022@gmail.com',
       rooms: [
@@ -800,10 +768,151 @@
     };
   }
 
-  let state = getInitialState();
+  let sharedState = getDefaultSharedState();
+  let currentUser = JSON.parse(localStorage.getItem(LOCAL_USER_KEY)) || null;
+  let currentRoomId = 'room_main';
 
-  function save() {
-    saveStateToDB(state);
+  let isInitialLoadDone = false;
+  let lastNotifiedSignature = '';
+
+  function normalizeRoomArrays(r) {
+    if (!r.members) r.members = [];
+    if (!r.messages) r.messages = [];
+    if (!r.notes) r.notes = [];
+    if (!r.events) r.events = [];
+    r.events.forEach(ev => {
+      if (!ev.going) ev.going = [];
+      if (!ev.maybe) ev.maybe = [];
+      if (!ev.notGoing) ev.notGoing = [];
+    });
+  }
+
+  function saveShared() {
+    if (dbRef && isFirebaseConnected) {
+      dbRef.set(sharedState).catch(err => console.error('Firebase save error:', err));
+    }
+  }
+
+  function saveLocalUser() {
+    if (currentUser) {
+      localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(currentUser));
+    }
+  }
+
+  function updateNotifyBtnUI() {
+    const btn = document.getElementById('notifyToggleBtn');
+    if ('Notification' in window && Notification.permission === 'granted') {
+      btn.textContent = '🔔 通知ON';
+      btn.classList.add('notify-on');
+    } else {
+      btn.textContent = '🔕 通知OFF';
+      btn.classList.remove('notify-on');
+    }
+  }
+
+  document.getElementById('notifyToggleBtn').addEventListener('click', async () => {
+    if (!('Notification' in window)) {
+      alert('このブラウザはシステム通知に対応していません。画面内の通知バナーのみ動作します。');
+      return;
+    }
+    const perm = await Notification.requestPermission();
+    updateNotifyBtnUI();
+    if (perm === 'granted') {
+      playNotifyBeep();
+      showPushNotification('みやチャット', '通知がONになりました！新着メッセージやイベントをお知らせします。');
+    } else {
+      alert('通知がブロックされています。ブラウザの設定から通知を許可してください。');
+    }
+  });
+
+  function playNotifyBeep() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.setValueAtTime(1174, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.26);
+    } catch (e) {}
+  }
+
+  function showInAppToast(text) {
+    const el = document.getElementById('inappToast');
+    el.textContent = text;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3500);
+  }
+
+  function showPushNotification(title, body) {
+    showInAppToast(`${title}：${body}`);
+    playNotifyBeep();
+    if ('Notification' in window && Notification.permission === 'granted') {
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.ready.then(reg => {
+          reg.showNotification(title, {
+            body: body,
+            icon: './icon.png',
+            badge: './icon.png',
+            vibrate: [150, 80, 150]
+          });
+        }).catch(() => {});
+      } else {
+        try { new Notification(title, { body, icon: './icon.png' }); } catch (e) {}
+      }
+    }
+  }
+
+  function checkAndTriggerIncomingNotification(newState) {
+    if (!currentUser || !newState || !newState.rooms) return;
+    let latestSig = '';
+    let notifyTitle = '';
+    let notifyBody = '';
+
+    newState.rooms.forEach(r => {
+      const isMember = (currentUser.id === newState.creatorId) || (r.members || []).some(m => m.id === currentUser.id);
+      if (!isMember) return;
+
+      const msgs = r.messages || [];
+      if (msgs.length > 0) {
+        const lastM = msgs[msgs.length - 1];
+        if (lastM.type === 'msg' && lastM.senderId !== currentUser.id) {
+          const sig = `msg_${r.id}_${msgs.length}_${lastM.time}_${lastM.text || lastM.mediaType}`;
+          latestSig = sig;
+          notifyTitle = `💬 ${lastM.senderName}（${r.showName === false ? 'グループ' : r.name}）`;
+          notifyBody = lastM.mediaType ? '画像・ファイルを送信しました' : (lastM.text || '');
+        }
+      }
+
+      const evs = r.events || [];
+      if (evs.length > 0) {
+        const lastE = evs[evs.length - 1];
+        if (lastE.authorId !== currentUser.id) {
+          const evSig = `ev_${r.id}_${lastE.id}`;
+          if (!latestSig) {
+            latestSig = evSig;
+            notifyTitle = `📅 新しいイベントが作成されました`;
+            notifyBody = `${lastE.title}（${lastE.dateOnly || ''}）`;
+          }
+        }
+      }
+    });
+
+    if (!isInitialLoadDone) {
+      lastNotifiedSignature = latestSig;
+      isInitialLoadDone = true;
+      return;
+    }
+
+    if (latestSig && latestSig !== lastNotifiedSignature) {
+      lastNotifiedSignature = latestSig;
+      showPushNotification(notifyTitle, notifyBody);
+    }
   }
 
   let selectedAvatar = '🐱';
@@ -820,7 +929,6 @@
   let editingNoteAttach = null;
   let editingEventId = null;
   let editingEventAttach = null;
-
   let activeChatMsgIndex = null;
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -867,7 +975,7 @@
   }
 
   function getCurrentRoom() {
-    return state.rooms.find(r => r.id === state.currentRoomId) || state.rooms[0];
+    return sharedState.rooms.find(r => r.id === currentRoomId) || sharedState.rooms[0];
   }
 
   function getDisplayRoomName(room, isForAdminScreen = false) {
@@ -878,18 +986,18 @@
   }
 
   function getMyRoleInRoom(room) {
-    if (!state.currentUser) return 'member';
-    if (state.currentUser.id === state.creatorId) return 'admin';
-    const m = room.members.find(x => x.id === state.currentUser.id);
+    if (!currentUser) return 'member';
+    if (currentUser.id === sharedState.creatorId) return 'admin';
+    const m = (room.members || []).find(x => x.id === currentUser.id);
     return m ? m.role : 'member';
   }
 
   function canManageItem(room, authorId, authorName) {
-    if (!state.currentUser) return false;
+    if (!currentUser) return false;
     const role = getMyRoleInRoom(room);
     if (role === 'admin' || role === 'co-admin') return true;
-    if (authorId && authorId === state.currentUser.id) return true;
-    if (!authorId && authorName && authorName === state.currentUser.name) return true;
+    if (authorId && authorId === currentUser.id) return true;
+    if (!authorId && authorName && authorName === currentUser.name) return true;
     return false;
   }
 
@@ -902,8 +1010,8 @@
 
   function getAllKnownMembers() {
     const map = new Map();
-    state.rooms.forEach(r => {
-      r.members.forEach(m => {
+    sharedState.rooms.forEach(r => {
+      (r.members || []).forEach(m => {
         if (!map.has(m.id)) map.set(m.id, m);
       });
     });
@@ -920,7 +1028,7 @@
     const adminUrl = `${base}?admin=1`;
     const subject = encodeURIComponent('【みやチャット】管理画面アクセスURL');
     const body = encodeURIComponent(`管理画面へのアクセスURLです。\n\n${adminUrl}\n\n※開く際に設定済みのパスワード（初期値: 9696）を入力してください。`);
-    return `mailto:${encodeURIComponent(state.adminEmail)}?subject=${subject}&body=${body}`;
+    return `mailto:${encodeURIComponent(sharedState.adminEmail)}?subject=${subject}&body=${body}`;
   }
 
   function processAvatarImage(file, callback) {
@@ -943,14 +1051,14 @@
 
   function readAttachFile(file, type, callback) {
     if (!file) return;
-    if (file.size > 50 * 1024 * 1024) return alert('50MB以下のファイルを選択してください');
+    if (file.size > 15 * 1024 * 1024) return alert('15MB以下のファイルを選択してください');
 
     if (type === 'image') {
       const reader = new FileReader();
       reader.onload = (ev) => {
         const img = new Image();
         img.onload = () => {
-          const maxDim = 1280;
+          const maxDim = 1024;
           let w = img.width;
           let h = img.height;
           if (w > maxDim || h > maxDim) {
@@ -960,7 +1068,7 @@
           const canvas = document.createElement('canvas');
           canvas.width = w; canvas.height = h;
           canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          const compressed = canvas.toDataURL('image/jpeg', 0.82);
+          const compressed = canvas.toDataURL('image/jpeg', 0.78);
           const approxKb = Math.max(1, Math.round((compressed.length * 3 / 4) / 1024));
           callback({ type: 'image', data: compressed, name: file.name, size: approxKb + 'KB' });
         };
@@ -999,7 +1107,6 @@
     document.getElementById('lightboxImgEl').src = '';
   };
 
-  // 初回入室画面
   const xSyncToggle = document.getElementById('xSyncToggle');
   const xInputWrap = document.getElementById('xInputWrap');
   xSyncToggle.addEventListener('change', () => {
@@ -1028,40 +1135,41 @@
       xHandle = formatXDisplay(rawX);
     }
 
-    const userId = 'u_' + Date.now();
-    const isFirstCreator = !state.creatorId;
-    if (isFirstCreator) state.creatorId = userId;
+    const userId = 'u_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    const isFirstCreator = !sharedState.creatorId;
+    if (isFirstCreator) sharedState.creatorId = userId;
 
-    state.currentUser = {
+    currentUser = {
       id: userId,
       name: name,
       avatar: selectedAvatar,
       isImg: selectedAvatarIsImg,
       xHandle: xHandle
     };
+    saveLocalUser();
 
-    const targetRoom = (invitedRoomId && state.rooms.find(r => r.id === invitedRoomId)) || state.rooms[0];
+    const targetRoom = (invitedRoomId && sharedState.rooms.find(r => r.id === invitedRoomId)) || sharedState.rooms[0];
     if (targetRoom) {
+      normalizeRoomArrays(targetRoom);
       if (targetRoom.isLocked && !isFirstCreator) {
         alert('このグループは現在鍵がかかっているため入室できません。');
         return;
       }
-      state.currentRoomId = targetRoom.id;
+      currentRoomId = targetRoom.id;
       targetRoom.members.push({
-        ...state.currentUser,
+        ...currentUser,
         role: isFirstCreator ? 'admin' : 'member'
       });
       targetRoom.messages.push({ type: 'divider', text: `ここから ${name} が参加（過去の履歴も閲覧可能）` });
     }
 
-    save();
+    saveShared();
     document.getElementById('joinScreen').classList.add('hidden');
     renderAll();
 
     if (isAdminDirectUrl) openAdminAuthModal();
   });
 
-  // 自分のプロフィール編集画面
   const editProfileXToggle = document.getElementById('editProfileXToggle');
   const editProfileXInputWrap = document.getElementById('editProfileXInputWrap');
   editProfileXToggle.addEventListener('change', () => {
@@ -1069,7 +1177,7 @@
   });
 
   function openMyProfileEditScreen() {
-    const u = state.currentUser;
+    const u = currentUser;
     editingAvatar = u.avatar;
     editingAvatarIsImg = u.isImg;
     document.getElementById('editAvatarPreview').innerHTML = u.isImg ? `<img src="${u.avatar}" />` : u.avatar;
@@ -1114,15 +1222,17 @@
       newX = formatXDisplay(rawX);
     }
 
-    const oldName = state.currentUser.name;
-    const myId = state.currentUser.id;
+    const oldName = currentUser.name;
+    const myId = currentUser.id;
 
-    state.currentUser.name = newName;
-    state.currentUser.avatar = editingAvatar;
-    state.currentUser.isImg = editingAvatarIsImg;
-    state.currentUser.xHandle = newX;
+    currentUser.name = newName;
+    currentUser.avatar = editingAvatar;
+    currentUser.isImg = editingAvatarIsImg;
+    currentUser.xHandle = newX;
+    saveLocalUser();
 
-    state.rooms.forEach(r => {
+    sharedState.rooms.forEach(r => {
+      normalizeRoomArrays(r);
       const m = r.members.find(x => x.id === myId);
       if (m) {
         m.name = newName;
@@ -1149,13 +1259,12 @@
       }
     });
 
-    save();
+    saveShared();
     document.getElementById('myProfileEditScreen').classList.add('hidden');
     renderAll();
     alert('プロフィールを更新しました！');
   });
 
-  // 管理画面パスワード認証＆コントロール画面
   function openAdminAuthModal() {
     document.getElementById('adminPasswordInput').value = '';
     document.getElementById('sendAdminMailLink').href = buildAdminMailtoHref();
@@ -1169,7 +1278,7 @@
 
   document.getElementById('adminPasswordSubmitBtn').addEventListener('click', () => {
     const inputPass = document.getElementById('adminPasswordInput').value.trim();
-    if (inputPass === state.adminPassword) {
+    if (inputPass === sharedState.adminPassword) {
       document.getElementById('adminAuthModal').classList.add('hidden');
       openAdminDashboard();
     } else {
@@ -1179,6 +1288,7 @@
 
   function openAdminDashboard() {
     const room = getCurrentRoom();
+    normalizeRoomArrays(room);
     document.getElementById('adminTargetRoomName').textContent = getDisplayRoomName(room, true);
     document.getElementById('adminRoomInviteUrl').value = buildRoomInviteUrl(room.id);
     document.getElementById('adminToggleNameVisBtn').textContent = room.showName === false
@@ -1188,24 +1298,18 @@
       ? '🔓 鍵を解除する（新規入室を許可）'
       : '🔒 鍵をかける（現在のメンバー以外入室不可）';
 
-    document.getElementById('adminEmailInput').value = state.adminEmail;
-    document.getElementById('adminNewPassInput').value = state.adminPassword;
+    document.getElementById('adminEmailInput').value = sharedState.adminEmail;
+    document.getElementById('adminNewPassInput').value = sharedState.adminPassword;
     document.getElementById('dashboardMailBtn').href = buildAdminMailtoHref();
 
-    if (navigator.storage && navigator.storage.estimate) {
-      navigator.storage.estimate().then(est => {
-        const usedMb = ((est.usage || 0) / (1024 * 1024)).toFixed(1);
-        const quotaMb = ((est.quota || 0) / (1024 * 1024)).toFixed(0);
-        document.getElementById('storageUsageText').textContent = `現在使用量: ${usedMb} MB / 上限目安: ${quotaMb} MB（大容量IndexedDB稼働中）`;
-      });
-    } else {
-      document.getElementById('storageUsageText').textContent = '大容量IndexedDBストレージで稼働中';
-    }
+    document.getElementById('firebaseSyncStatus').textContent = isFirebaseConnected
+      ? '✅ Firebase リアルタイム同期中（全員のスマホと自動共有されます）'
+      : '⚠️ firebaseConfigの接続確認中';
 
     const checkList = document.getElementById('adminMemberCheckList');
     checkList.innerHTML = '';
     getAllKnownMembers().forEach(m => {
-      if (m.id === state.currentUser.id) return;
+      if (m.id === currentUser.id) return;
       const row = document.createElement('label');
       row.className = 'member-select-row';
       row.style.cursor = 'pointer';
@@ -1224,7 +1328,7 @@
     room.members.forEach(m => {
       const row = document.createElement('div');
       row.className = 'member-select-row';
-      const isGlobalCreator = (m.id === state.creatorId);
+      const isGlobalCreator = (m.id === sharedState.creatorId);
       row.innerHTML = `
         <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:130px;">
           <strong>${escapeHtml(m.name)}</strong>
@@ -1254,7 +1358,7 @@
     if (m) {
       m.role = newRole;
       room.messages.push({ type: 'system', text: `${m.name} の管理権限が変更されました` });
-      save();
+      saveShared();
       openAdminDashboard();
       renderAll();
     }
@@ -1267,7 +1371,7 @@
     if (!confirm(`「${m.name}」をこのグループから削除しますか？`)) return;
     room.members = room.members.filter(x => x.id !== memberId);
     room.messages.push({ type: 'system', text: `${m.name} が管理人によりグループから削除されました` });
-    save();
+    saveShared();
     openAdminDashboard();
     renderAll();
   };
@@ -1287,7 +1391,7 @@
   document.getElementById('adminToggleNameVisBtn').addEventListener('click', () => {
     const room = getCurrentRoom();
     room.showName = (room.showName === false) ? true : false;
-    save();
+    saveShared();
     openAdminDashboard();
     renderAll();
   });
@@ -1299,7 +1403,7 @@
       type: 'system',
       text: room.isLocked ? '🔒 管理人がグループに鍵をかけました' : '🔓 管理人が鍵を解除しました'
     });
-    save();
+    saveShared();
     openAdminDashboard();
     renderAll();
   });
@@ -1309,9 +1413,9 @@
     const newPass = document.getElementById('adminNewPassInput').value.trim();
     if (!newEmail) return alert('メールアドレスを入力してください');
     if (!newPass) return alert('新しいパスワードを入力してください');
-    state.adminEmail = newEmail;
-    state.adminPassword = newPass;
-    save();
+    sharedState.adminEmail = newEmail;
+    sharedState.adminPassword = newPass;
+    saveShared();
     document.getElementById('dashboardMailBtn').href = buildAdminMailtoHref();
     alert('パスワードとメールアドレスを更新しました！');
   });
@@ -1325,13 +1429,13 @@
     const allMembers = getAllKnownMembers();
     const selectedIds = Array.from(document.querySelectorAll('.admin-group-member-cb:checked')).map(cb => cb.value);
 
-    const members = [{ ...state.currentUser, role: 'admin' }];
+    const members = [{ ...currentUser, role: 'admin' }];
     selectedIds.forEach(id => {
       const found = allMembers.find(m => m.id === id);
       if (found) members.push({ ...found, role: 'member' });
     });
 
-    state.rooms.push({
+    sharedState.rooms.push({
       id: newId,
       name: name,
       showName: showName,
@@ -1342,12 +1446,12 @@
       events: []
     });
 
-    state.currentRoomId = newId;
+    currentRoomId = newId;
     document.getElementById('adminNewGroupName').value = '';
     const newUrl = buildRoomInviteUrl(newId);
     document.getElementById('adminCreatedUrlInput').value = newUrl;
     document.getElementById('adminCreatedUrlBox').style.display = 'block';
-    save();
+    saveShared();
     renderAll();
   });
 
@@ -1358,19 +1462,6 @@
     alert('作成したグループの専用招待URLをコピーしました！');
   });
 
-  document.getElementById('adminSimFriendBtn').addEventListener('click', () => {
-    const room = getCurrentRoom();
-    const names = ['ゆうき', 'みさき', 'けんた', 'あおい'];
-    const name = names[Math.floor(Math.random() * names.length)] + Math.floor(Math.random()*99);
-    const fId = 'f_' + Date.now();
-    room.members.push({ id: fId, name, avatar: '🐶', isImg: false, role: 'member', xHandle: 'X' });
-    room.messages.push({ type: 'divider', text: `ここから ${name} がURLから参加` });
-    save();
-    openAdminDashboard();
-    renderAll();
-  });
-
-  // 一般メンバー用グループ作成画面
   document.getElementById('openUserCreateGroupBtn').addEventListener('click', () => {
     closeDrawer();
     document.getElementById('userPermissionGateBox').classList.remove('hidden');
@@ -1383,7 +1474,7 @@
     const listEl = document.getElementById('userMemberCheckList');
     listEl.innerHTML = '';
     getAllKnownMembers().forEach(m => {
-      if (m.id === state.currentUser.id) return;
+      if (m.id === currentUser.id) return;
       const row = document.createElement('label');
       row.className = 'member-select-row';
       row.style.cursor = 'pointer';
@@ -1416,31 +1507,30 @@
     const allMembers = getAllKnownMembers();
     const selectedIds = Array.from(document.querySelectorAll('.user-group-member-cb:checked')).map(cb => cb.value);
 
-    const members = [{ ...state.currentUser, role: 'admin' }];
+    const members = [{ ...currentUser, role: 'admin' }];
     selectedIds.forEach(id => {
       const found = allMembers.find(m => m.id === id);
       if (found) members.push({ ...found, role: 'member' });
     });
 
-    state.rooms.push({
+    sharedState.rooms.push({
       id: newId,
       name: name,
       showName: showName,
       isLocked: false,
       members: members,
-      messages: [{ type: 'system', text: `${state.currentUser.name} がグループを作成しました（${members.length}人参加中）` }],
+      messages: [{ type: 'system', text: `${currentUser.name} がグループを作成しました（${members.length}人参加中）` }],
       notes: [],
       events: []
     });
 
-    state.currentRoomId = newId;
+    currentRoomId = newId;
     document.getElementById('userNewGroupName').value = '';
-    save();
+    saveShared();
     document.getElementById('createGroupScreen').classList.add('hidden');
     renderAll();
   });
 
-  // 共通添付レンダリング
   function renderAttachmentHtml(type, data, name, size) {
     if (!type || !data) return '';
     if (type === 'image') {
@@ -1468,14 +1558,15 @@
     return '';
   }
 
-  // 全体描画
   function renderAll() {
+    if (!currentUser) return;
     const room = getCurrentRoom();
+    normalizeRoomArrays(room);
     const myRole = getMyRoleInRoom(room);
 
     document.getElementById('headerRoomName').textContent = (room.isLocked ? '🔒 ' : '') + getDisplayRoomName(room, false);
     const roleText = myRole === 'admin' ? '👑管理人' : myRole === 'co-admin' ? '🛡️共同管理人' : myRole === 'leader' ? '⭐リーダー' : 'メンバー';
-    document.getElementById('headerUserStatus').textContent = `${state.currentUser.name} (${roleText})`;
+    document.getElementById('headerUserStatus').textContent = `${currentUser.name} (${roleText})`;
 
     renderMessages(room);
     renderNotes(room);
@@ -1489,13 +1580,12 @@
     alert(`招待URLをコピーしました！\n\n${url}`);
   });
 
-  // トーク機能
   window.openMsgActionModal = (index) => {
     const room = getCurrentRoom();
     const m = room.messages[index];
     if (!m || m.type !== 'msg') return;
 
-    const isMine = m.senderId === state.currentUser.id;
+    const isMine = m.senderId === currentUser.id;
     const role = getMyRoleInRoom(room);
     const isAdmin = (role === 'admin' || role === 'co-admin');
 
@@ -1521,14 +1611,14 @@
     if (activeChatMsgIndex === null) return;
     const room = getCurrentRoom();
     const m = room.messages[activeChatMsgIndex];
-    if (!m || m.senderId !== state.currentUser.id) return;
+    if (!m || m.senderId !== currentUser.id) return;
 
     const newText = document.getElementById('editChatMsgTextarea').value.trim();
     if (!newText) return alert('メッセージを入力してください（消す場合は「送信を取り消す」を押してください）');
 
     m.text = newText;
     m.edited = true;
-    save();
+    saveShared();
     document.getElementById('msgActionModal').classList.add('hidden');
     activeChatMsgIndex = null;
     renderMessages(room);
@@ -1542,13 +1632,13 @@
 
     if (!confirm('このメッセージの送信を取り消しますか？（全員の画面から消去されます）')) return;
 
-    const isMine = m.senderId === state.currentUser.id;
+    const isMine = m.senderId === currentUser.id;
     const noticeText = isMine
-      ? `${state.currentUser.name} がメッセージの送信を取り消しました`
+      ? `${currentUser.name} がメッセージの送信を取り消しました`
       : `管理人が ${m.senderName} のメッセージを削除しました`;
 
     room.messages[activeChatMsgIndex] = { type: 'system', text: noticeText };
-    save();
+    saveShared();
     document.getElementById('msgActionModal').classList.add('hidden');
     activeChatMsgIndex = null;
     renderMessages(room);
@@ -1560,7 +1650,7 @@
     const role = getMyRoleInRoom(room);
     const isAdmin = (role === 'admin' || role === 'co-admin');
 
-    room.messages.forEach((m, idx) => {
+    (room.messages || []).forEach((m, idx) => {
       if (m.type === 'system') {
         const div = document.createElement('div');
         div.className = 'system-msg';
@@ -1572,7 +1662,7 @@
         div.textContent = m.text;
         chatArea.appendChild(div);
       } else {
-        const isMine = m.senderId === state.currentUser.id;
+        const isMine = m.senderId === currentUser.id;
         const canControl = isMine || isAdmin;
         const row = document.createElement('div');
         row.className = `msg-row ${isMine ? 'mine' : 'others'}`;
@@ -1638,17 +1728,17 @@
     const room = getCurrentRoom();
     room.messages.push({
       type: 'msg',
-      senderId: state.currentUser.id,
-      senderName: state.currentUser.name,
-      avatar: state.currentUser.avatar,
-      isImg: state.currentUser.isImg,
+      senderId: currentUser.id,
+      senderName: currentUser.name,
+      avatar: currentUser.avatar,
+      isImg: currentUser.isImg,
       role: getMyRoleInRoom(room),
-      xHandle: state.currentUser.xHandle || '',
+      xHandle: currentUser.xHandle || '',
       text: text,
       time: getTime()
     });
     input.value = '';
-    save();
+    saveShared();
     renderMessages(room);
   });
 
@@ -1657,19 +1747,19 @@
       const room = getCurrentRoom();
       room.messages.push({
         type: 'msg',
-        senderId: state.currentUser.id,
-        senderName: state.currentUser.name,
-        avatar: state.currentUser.avatar,
-        isImg: state.currentUser.isImg,
+        senderId: currentUser.id,
+        senderName: currentUser.name,
+        avatar: currentUser.avatar,
+        isImg: currentUser.isImg,
         role: getMyRoleInRoom(room),
-        xHandle: state.currentUser.xHandle || '',
+        xHandle: currentUser.xHandle || '',
         mediaType: res.type,
         mediaData: res.data,
         fileName: res.name,
         fileSize: res.size,
         time: getTime()
       });
-      save();
+      saveShared();
       renderMessages(room);
     });
   }
@@ -1680,10 +1770,9 @@
   document.getElementById('btnFile').addEventListener('click', () => document.getElementById('fileInput').click());
   document.getElementById('fileInput').addEventListener('change', (e) => { handleChatUpload(e.target.files[0], 'file'); e.target.value = ''; });
 
-  // プロフィール＆Xジャンプモーダル
   window.openUserProfile = (userId, fallbackName, fallbackAvatar, fallbackIsImg, fallbackRole, fallbackX) => {
     const room = getCurrentRoom();
-    const member = room.members.find(m => m.id === userId) || {
+    const member = (room.members || []).find(m => m.id === userId) || {
       id: userId, name: fallbackName, avatar: fallbackAvatar, isImg: fallbackIsImg, role: fallbackRole, xHandle: fallbackX
     };
 
@@ -1706,7 +1795,7 @@
     }
 
     const editBtn = document.getElementById('openMyProfileEditFromModalBtn');
-    editBtn.style.display = (userId === state.currentUser.id) ? 'block' : 'none';
+    editBtn.style.display = (userId === currentUser.id) ? 'block' : 'none';
     document.getElementById('userProfileModal').classList.remove('hidden');
   };
 
@@ -1714,7 +1803,6 @@
     document.getElementById('userProfileModal').classList.add('hidden');
   });
 
-  // タブ切り替え
   document.querySelectorAll('.nav-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -1726,7 +1814,6 @@
     });
   });
 
-  // ノート機能
   document.getElementById('noteAttachImgBtn').addEventListener('click', () => document.getElementById('noteImgInput').click());
   document.getElementById('noteImgInput').addEventListener('change', (e) => {
     readAttachFile(e.target.files[0], 'image', (res) => {
@@ -1755,11 +1842,12 @@
   function renderNotes(room) {
     const list = document.getElementById('noteListEl');
     list.innerHTML = '';
-    if (room.notes.length === 0) {
+    const notes = room.notes || [];
+    if (notes.length === 0) {
       list.innerHTML = `<div style="text-align:center; font-size:12px; color:#64748b; padding:16px;">まだノートは投稿されていません</div>`;
       return;
     }
-    room.notes.slice().reverse().forEach(n => {
+    notes.slice().reverse().forEach(n => {
       const card = document.createElement('div');
       card.className = 'card';
       const mediaHtml = renderAttachmentHtml(n.attachType, n.attachData, n.attachName, n.attachSize);
@@ -1776,7 +1864,7 @@
         <div class="card-body">${linkifyText(n.body)}</div>
         ${mediaHtml}
         <div class="card-actions-bar">
-          <button onclick="likeNote('${n.id}')" style="background:#f1f5f9; border:none; padding:5px 10px; border-radius:6px; font-size:12px; cursor:pointer;">👍 いいね (${n.likes})</button>
+          <button onclick="likeNote('${n.id}')" style="background:#f1f5f9; border:none; padding:5px 10px; border-radius:6px; font-size:12px; cursor:pointer;">👍 いいね (${n.likes || 0})</button>
           ${ownerBtns}
         </div>
       `;
@@ -1787,7 +1875,7 @@
   window.likeNote = (id) => {
     const room = getCurrentRoom();
     const note = room.notes.find(n => n.id === id);
-    if (note) { note.likes++; save(); renderNotes(room); }
+    if (note) { note.likes = (note.likes || 0) + 1; saveShared(); renderNotes(room); }
   };
 
   window.deleteNote = (id) => {
@@ -1796,7 +1884,7 @@
     if (!note || !canManageItem(room, note.authorId, note.author)) return alert('削除権限がありません');
     if (!confirm(`ノート「${note.title}」を削除しますか？`)) return;
     room.notes = room.notes.filter(n => n.id !== id);
-    save();
+    saveShared();
     renderNotes(room);
   };
 
@@ -1862,7 +1950,7 @@
     note.attachName = editingNoteAttach ? editingNoteAttach.name : '';
     note.attachSize = editingNoteAttach ? editingNoteAttach.size : '';
 
-    save();
+    saveShared();
     document.getElementById('editNoteModal').classList.add('hidden');
     renderNotes(room);
   });
@@ -1877,8 +1965,8 @@
     const room = getCurrentRoom();
     room.notes.push({
       id: 'n_' + Date.now(),
-      authorId: state.currentUser.id,
-      author: state.currentUser.name,
+      authorId: currentUser.id,
+      author: currentUser.name,
       title,
       body,
       attachType: pendingNoteAttach ? pendingNoteAttach.type : null,
@@ -1891,11 +1979,10 @@
     document.getElementById('noteBodyInput').value = '';
     pendingNoteAttach = null;
     document.getElementById('noteAttachPreview').textContent = '';
-    save();
+    saveShared();
     renderNotes(room);
   });
 
-  // カレンダー＆イベント機能
   document.getElementById('prevMonthBtn').addEventListener('click', () => {
     calDate.setMonth(calDate.getMonth() - 1);
     renderCalendarAndEvents(getCurrentRoom());
@@ -1923,7 +2010,8 @@
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-    const eventDates = new Set(room.events.map(e => getEventDateOnly(e)));
+    const events = room.events || [];
+    const eventDates = new Set(events.map(e => getEventDateOnly(e)));
 
     for (let i = 0; i < firstDay; i++) {
       const empty = document.createElement('div');
@@ -1954,7 +2042,7 @@
 
     const list = document.getElementById('eventListEl');
     list.innerHTML = '';
-    const filtered = selectedDateFilter ? room.events.filter(e => getEventDateOnly(e) === selectedDateFilter) : room.events;
+    const filtered = selectedDateFilter ? events.filter(e => getEventDateOnly(e) === selectedDateFilter) : events;
 
     if (filtered.length === 0) {
       list.innerHTML = `<div style="text-align:center; font-size:12px; color:#64748b; padding:12px;">登録されているイベントはありません</div>`;
@@ -1966,7 +2054,11 @@
       const kb = getEventDateOnly(b) + (b.startTime || '');
       return ka.localeCompare(kb);
     }).forEach(ev => {
-      const me = state.currentUser.name;
+      const me = currentUser.name;
+      const going = ev.going || [];
+      const maybe = ev.maybe || [];
+      const notGoing = ev.notGoing || [];
+
       const card = document.createElement('div');
       card.className = 'card';
       card.style.cursor = 'pointer';
@@ -1984,11 +2076,11 @@
         ? `<a href="${escapeHtml(safeFormUrl)}" target="_blank" rel="noopener noreferrer" class="form-apply-btn" onclick="event.stopPropagation()">📝 申し込みフォームを開く</a>`
         : '';
 
-      const goingChips = ev.going.length
-        ? ev.going.map(n => `<span class="name-chip">${escapeHtml(n)}</span>`).join('')
+      const goingChips = going.length
+        ? going.map(n => `<span class="name-chip">${escapeHtml(n)}</span>`).join('')
         : '<span style="color:#94a3b8; font-size:11px;">まだいません</span>';
-      const maybeChips = ev.maybe.length
-        ? `<div class="participant-row"><span style="font-size:11px; color:#64748b;">🤔 未定(${ev.maybe.length}):</span>${ev.maybe.map(n => `<span class="name-chip maybe">${escapeHtml(n)}</span>`).join('')}</div>`
+      const maybeChips = maybe.length
+        ? `<div class="participant-row"><span style="font-size:11px; color:#64748b;">🤔 未定(${maybe.length}):</span>${maybe.map(n => `<span class="name-chip maybe">${escapeHtml(n)}</span>`).join('')}</div>`
         : '';
 
       const inlinePreviewHtml = ev.attachType === 'image'
@@ -2018,16 +2110,16 @@
           ${inlinePreviewHtml}
           <div class="participant-box">
             <div class="participant-row">
-              <span style="font-size:11px; font-weight:bold; color:#0f172a;">🙋 参加(${ev.going.length}人):</span>
+              <span style="font-size:11px; font-weight:bold; color:#0f172a;">🙋 参加(${going.length}人):</span>
               ${goingChips}
             </div>
             ${maybeChips}
           </div>
         </div>
         <div class="rsvp-group" onclick="event.stopPropagation()">
-          <button class="rsvp-btn ${ev.going.includes(me) ? 'selected' : ''}" onclick="setRsvp('${ev.id}','going')">🙋 参加</button>
-          <button class="rsvp-btn ${ev.maybe.includes(me) ? 'selected' : ''}" onclick="setRsvp('${ev.id}','maybe')">🤔 未定</button>
-          <button class="rsvp-btn ${ev.notGoing.includes(me) ? 'selected' : ''}" onclick="setRsvp('${ev.id}','notGoing')">🙅 不参加</button>
+          <button class="rsvp-btn ${going.includes(me) ? 'selected' : ''}" onclick="setRsvp('${ev.id}','going')">🙋 参加</button>
+          <button class="rsvp-btn ${maybe.includes(me) ? 'selected' : ''}" onclick="setRsvp('${ev.id}','maybe')">🤔 未定</button>
+          <button class="rsvp-btn ${notGoing.includes(me) ? 'selected' : ''}" onclick="setRsvp('${ev.id}','notGoing')">🙅 不参加</button>
         </div>
         ${ownerBar}
       `;
@@ -2044,7 +2136,7 @@
     if (!confirm(`イベント「${ev.title}」を削除しますか？`)) return;
     room.events = room.events.filter(e => e.id !== id);
     document.getElementById('eventDetailModal').classList.add('hidden');
-    save();
+    saveShared();
     renderCalendarAndEvents(room);
   };
 
@@ -2124,7 +2216,7 @@
     ev.attachName = editingEventAttach ? editingEventAttach.name : '';
     ev.attachSize = editingEventAttach ? editingEventAttach.size : '';
 
-    save();
+    saveShared();
     document.getElementById('editEventModal').classList.add('hidden');
     renderCalendarAndEvents(room);
   });
@@ -2173,18 +2265,22 @@
     descEl.innerHTML = ev.desc ? linkifyText(ev.desc) : '（詳細メモはありません）';
     document.getElementById('evDetailAttachArea').innerHTML = renderAttachmentHtml(ev.attachType, ev.attachData, ev.attachName, ev.attachSize);
 
+    const going = ev.going || [];
+    const maybe = ev.maybe || [];
+    const notGoing = ev.notGoing || [];
+
     document.getElementById('evDetailMembers').innerHTML = `
       <div class="participant-row" style="margin-bottom:6px;">
-        <span style="font-weight:bold;">🙋 参加 (${ev.going.length}人):</span>
-        ${ev.going.length ? ev.going.map(n => `<span class="name-chip">${escapeHtml(n)}</span>`).join('') : '<span style="color:#94a3b8;">なし</span>'}
+        <span style="font-weight:bold;">🙋 参加 (${going.length}人):</span>
+        ${going.length ? going.map(n => `<span class="name-chip">${escapeHtml(n)}</span>`).join('') : '<span style="color:#94a3b8;">なし</span>'}
       </div>
       <div class="participant-row" style="margin-bottom:6px;">
-        <span style="font-weight:bold;">🤔 未定 (${ev.maybe.length}人):</span>
-        ${ev.maybe.length ? ev.maybe.map(n => `<span class="name-chip maybe">${escapeHtml(n)}</span>`).join('') : '<span style="color:#94a3b8;">なし</span>'}
+        <span style="font-weight:bold;">🤔 未定 (${maybe.length}人):</span>
+        ${maybe.length ? maybe.map(n => `<span class="name-chip maybe">${escapeHtml(n)}</span>`).join('') : '<span style="color:#94a3b8;">なし</span>'}
       </div>
       <div class="participant-row">
-        <span style="font-weight:bold;">🙅 不参加 (${ev.notGoing.length}人):</span>
-        <span style="color:#64748b;">${ev.notGoing.length ? ev.notGoing.map(n => escapeHtml(n)).join('、') : 'なし'}</span>
+        <span style="font-weight:bold;">🙅 不参加 (${notGoing.length}人):</span>
+        <span style="color:#64748b;">${notGoing.length ? notGoing.map(n => escapeHtml(n)).join('、') : 'なし'}</span>
       </div>
     `;
 
@@ -2235,13 +2331,13 @@
   window.setRsvp = (id, status) => {
     const room = getCurrentRoom();
     const ev = room.events.find(e => e.id === id);
-    const me = state.currentUser.name;
+    const me = currentUser.name;
     if (!ev) return;
-    ev.going = ev.going.filter(x => x !== me);
-    ev.maybe = ev.maybe.filter(x => x !== me);
-    ev.notGoing = ev.notGoing.filter(x => x !== me);
+    ev.going = (ev.going || []).filter(x => x !== me);
+    ev.maybe = (ev.maybe || []).filter(x => x !== me);
+    ev.notGoing = (ev.notGoing || []).filter(x => x !== me);
     ev[status].push(me);
-    save();
+    saveShared();
     renderCalendarAndEvents(room);
   };
 
@@ -2260,8 +2356,8 @@
     const room = getCurrentRoom();
     room.events.push({
       id: 'e_' + Date.now(),
-      authorId: state.currentUser.id,
-      author: state.currentUser.name,
+      authorId: currentUser.id,
+      author: currentUser.name,
       title,
       dateOnly,
       startTime,
@@ -2274,7 +2370,7 @@
       attachData: pendingEvAttach ? pendingEvAttach.data : null,
       attachName: pendingEvAttach ? pendingEvAttach.name : '',
       attachSize: pendingEvAttach ? pendingEvAttach.size : '',
-      going: [state.currentUser.name], maybe: [], notGoing: []
+      going: [currentUser.name], maybe: [], notGoing: []
     });
 
     document.getElementById('eventTitleInput').value = '';
@@ -2287,27 +2383,26 @@
     document.getElementById('eventDescInput').value = '';
     pendingEvAttach = null;
     document.getElementById('evAttachPreview').textContent = '';
-    save();
+    saveShared();
     renderCalendarAndEvents(room);
   });
 
-  // ルーム一覧ドロワー
   document.getElementById('menuBtn').addEventListener('click', () => {
     const listEl = document.getElementById('roomListEl');
     listEl.innerHTML = '';
-    const isGlobalAdmin = state.currentUser.id === state.creatorId;
-    const visibleRooms = state.rooms.filter(r => isGlobalAdmin || r.members.some(m => m.id === state.currentUser.id));
+    const isGlobalAdmin = currentUser.id === sharedState.creatorId;
+    const visibleRooms = sharedState.rooms.filter(r => isGlobalAdmin || (r.members || []).some(m => m.id === currentUser.id));
 
     visibleRooms.forEach(r => {
+      normalizeRoomArrays(r);
       const div = document.createElement('div');
-      div.className = `room-item ${r.id === state.currentRoomId ? 'active' : ''}`;
+      div.className = `room-item ${r.id === currentRoomId ? 'active' : ''}`;
       div.innerHTML = `
         <div style="font-size:14px; font-weight:bold;">${r.isLocked ? '🔒 ' : '💬 '}${escapeHtml(getDisplayRoomName(r, false))}</div>
         <div style="font-size:11px; color:#64748b; margin-top:3px;">メンバー: ${r.members.length}人 ・ 履歴: ${r.messages.length}件</div>
       `;
       div.addEventListener('click', () => {
-        state.currentRoomId = r.id;
-        save();
+        currentRoomId = r.id;
         renderAll();
         closeDrawer();
       });
@@ -2324,52 +2419,63 @@
   document.getElementById('closeDrawerBtn').addEventListener('click', closeDrawer);
   document.getElementById('drawerOverlay').addEventListener('click', closeDrawer);
 
-  // 起動時初期化
-  (async function initApp() {
-    LEGACY_KEYS.forEach(k => {
-      try { localStorage.removeItem(k); } catch (e) {}
-    });
+  updateNotifyBtnUI();
 
-    const saved = await loadStateFromDB();
-    if (saved) {
-      state = saved;
-      if (!state.adminPassword) state.adminPassword = '9696';
-      if (!state.adminEmail) state.adminEmail = 'miyairi1022@gmail.com';
+  function handleSyncedData(remoteData) {
+    if (remoteData && remoteData.rooms) {
+      sharedState = remoteData;
+      if (!sharedState.adminPassword) sharedState.adminPassword = '9696';
+      if (!sharedState.adminEmail) sharedState.adminEmail = 'miyairi1022@gmail.com';
+      sharedState.rooms.forEach(normalizeRoomArrays);
     }
 
-    if (state.currentUser) {
+    if (currentUser) {
       if (invitedRoomId) {
-        const target = state.rooms.find(r => r.id === invitedRoomId);
+        const target = sharedState.rooms.find(r => r.id === invitedRoomId);
         if (target) {
-          const alreadyIn = target.members.some(m => m.id === state.currentUser.id);
+          normalizeRoomArrays(target);
+          const alreadyIn = target.members.some(m => m.id === currentUser.id);
           if (!alreadyIn) {
-            if (target.isLocked && state.currentUser.id !== state.creatorId) {
+            if (target.isLocked && currentUser.id !== sharedState.creatorId) {
               alert('このグループは鍵がかかっているため入室できません。');
             } else {
-              target.members.push({ ...state.currentUser, role: 'member' });
-              target.messages.push({ type: 'divider', text: `ここから ${state.currentUser.name} が招待URLから参加` });
-              state.currentRoomId = target.id;
-              save();
+              target.members.push({ ...currentUser, role: 'member' });
+              target.messages.push({ type: 'divider', text: `ここから ${currentUser.name} が招待URLから参加` });
+              currentRoomId = target.id;
+              saveShared();
             }
           } else {
-            state.currentRoomId = target.id;
-            save();
+            currentRoomId = target.id;
           }
         }
       }
       document.getElementById('joinScreen').classList.add('hidden');
+      checkAndTriggerIncomingNotification(sharedState);
       renderAll();
 
-      if (isAdminDirectUrl) {
+      if (isAdminDirectUrl && !isInitialLoadDone) {
         openAdminAuthModal();
       }
     } else if (invitedRoomId) {
-      const target = state.rooms.find(r => r.id === invitedRoomId);
+      const target = sharedState.rooms.find(r => r.id === invitedRoomId);
       if (target) {
-        document.getElementById('joinRoomNotice').textContent = `招待リンクから参加します`;
+        document.getElementById('joinRoomNotice').textContent = '招待リンクから参加します';
       }
     }
-  })();
+  }
+
+  if (dbRef && isFirebaseConnected) {
+    dbRef.on('value', (snapshot) => {
+      const val = snapshot.val();
+      if (!val && currentUser) {
+        saveShared();
+      } else {
+        handleSyncedData(val);
+      }
+    });
+  } else {
+    handleSyncedData(null);
+  }
 </script>
 </body>
 </html>
