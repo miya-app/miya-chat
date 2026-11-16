@@ -140,21 +140,21 @@
     }
 
     .terms-box {
-      width: 100%; max-height: 110px; overflow-y: auto;
+      width: 100%; max-height: 100px; overflow-y: auto;
       background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px;
-      padding: 10px; font-size: 11px; color: #334155; line-height: 1.5;
+      padding: 9px; font-size: 11px; color: #334155; line-height: 1.5;
       text-align: left; white-space: pre-wrap; margin-bottom: 8px;
     }
 
-    .avatar-upload-wrap { position: relative; width: 78px; height: 78px; margin: 0 auto 8px; cursor: pointer; }
+    .avatar-upload-wrap { position: relative; width: 74px; height: 74px; margin: 0 auto 6px; cursor: pointer; }
     .avatar-preview {
-      width: 78px; height: 78px; border-radius: 50%; background: #f1f5f9; border: 3px solid #06c755;
-      display: flex; justify-content: center; align-items: center; font-size: 36px; overflow: hidden;
+      width: 74px; height: 74px; border-radius: 50%; background: #f1f5f9; border: 3px solid #06c755;
+      display: flex; justify-content: center; align-items: center; font-size: 34px; overflow: hidden;
     }
     .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
     .avatar-edit-badge {
       position: absolute; bottom: 0; right: 0; background: #06c755; color: #fff;
-      width: 26px; height: 26px; border-radius: 50%; font-size: 13px;
+      width: 24px; height: 24px; border-radius: 50%; font-size: 12px;
       display: flex; justify-content: center; align-items: center; border: 2px solid #fff;
     }
 
@@ -171,6 +171,11 @@
       border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer;
     }
     .primary-btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
+    .admin-login-entry-btn {
+      width: 100%; padding: 10px; background-color: #222e42; color: #fde047;
+      border: 1px solid #334155; border-radius: 8px; font-size: 12px; font-weight: bold;
+      cursor: pointer; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 6px;
+    }
     .secondary-btn {
       width: 100%; padding: 10px; background: #e2e8f0; color: #1e293b;
       border: none; border-radius: 8px; font-size: 13px; font-weight: bold; margin-top: 8px; cursor: pointer;
@@ -403,6 +408,7 @@
     <img id="lightboxImgEl" src="" alt="拡大画像" onclick="event.stopPropagation()" />
   </div>
 
+  <!-- LINE風リアクションバー＋黒いアクションメニュー -->
   <div class="modal-overlay hidden" id="msgActionModal" onclick="closeMsgActionModal()">
     <div class="line-action-sheet" onclick="event.stopPropagation()">
       <div class="reaction-bar" id="reactionBarEl"></div>
@@ -410,6 +416,7 @@
     </div>
   </div>
 
+  <!-- 部分コピー専用モーダル -->
   <div class="modal-overlay hidden" id="partialCopyModal">
     <div class="modal-box">
       <div style="font-size:15px; font-weight:bold; color:#0f172a; margin-bottom:6px;">✂️ 部分コピー</div>
@@ -422,6 +429,7 @@
     </div>
   </div>
 
+  <!-- メッセージ編集モーダル -->
   <div class="modal-overlay hidden" id="editChatMsgModal">
     <div class="modal-box">
       <div style="font-size:15px; font-weight:bold; color:#0f172a; margin-bottom:8px;">✏️ メッセージを編集</div>
@@ -431,9 +439,10 @@
     </div>
   </div>
 
-  <div class="full-screen" id="joinScreen" style="justify-content:center; padding:18px 22px; text-align:center; overflow-y:auto;">
+  <!-- 1. 初回入室・プロフィール設定＆管理人専用ログイン画面 -->
+  <div class="full-screen" id="joinScreen" style="justify-content:center; padding:16px 20px; text-align:center; overflow-y:auto;">
     <div style="font-size: 18px; font-weight: bold; color: #0f172a; margin-bottom: 2px;">みやチャット参加設定</div>
-    <div style="font-size: 11px; color: #64748b; margin-bottom: 10px;" id="joinRoomNotice">
+    <div style="font-size: 11px; color: #64748b; margin-bottom: 8px;" id="joinRoomNotice">
       プロフィールと利用規約を確認して参加してください
     </div>
 
@@ -442,11 +451,11 @@
       <div class="avatar-preview" id="avatarPreview">🐱</div>
       <div class="avatar-edit-badge">📷</div>
     </div>
-    <div style="font-size: 10px; color: #06c755; font-weight: bold; margin-bottom: 10px;">↑ タップして好きな画像に変更</div>
+    <div style="font-size: 10px; color: #06c755; font-weight: bold; margin-bottom: 8px;">↑ タップして好きな画像に変更</div>
 
     <input type="text" id="nicknameInput" class="text-input" placeholder="ニックネームを入力 (例: たなか)" maxlength="15" />
 
-    <div style="width:100%; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px; margin-bottom:10px; text-align:left;">
+    <div style="width:100%; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:9px 10px; margin-bottom:8px; text-align:left;">
       <label style="display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:bold; cursor:pointer;">
         <span>𝕏 アカウントを記載・連携する</span>
         <input type="checkbox" id="xSyncToggle" style="width: 17px; height: 17px; accent-color: #000;" />
@@ -456,18 +465,23 @@
       </div>
     </div>
 
-    <div style="width:100%; text-align:left; margin-bottom:12px;">
+    <div style="width:100%; text-align:left; margin-bottom:10px;">
       <div style="font-size:11px; font-weight:bold; color:#0f172a; margin-bottom:4px;">📜 利用規約・ルール</div>
       <div class="terms-box" id="joinTermsText">読み込み中...</div>
-      <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:bold; color:#0f172a; cursor:pointer; background:#e8f9ef; padding:9px 10px; border-radius:8px; border:1px solid #a7f3d0;">
+      <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:bold; color:#0f172a; cursor:pointer; background:#e8f9ef; padding:8px 10px; border-radius:8px; border:1px solid #a7f3d0;">
         <input type="checkbox" id="agreeTermsCheckbox" style="width:18px; height:18px; accent-color:#06c755;" />
         <span>上記の利用規約に同意して参加します</span>
       </label>
     </div>
 
     <button id="joinBtn" class="primary-btn" disabled>利用規約に同意してトークに参加</button>
+
+    <button type="button" id="joinScreenAdminLoginBtn" class="admin-login-entry-btn">
+      🔐 管理人専用ログインはこちら
+    </button>
   </div>
 
+  <!-- 2. LINE風・トークルーム一覧画面 -->
   <div class="full-screen hidden" id="roomListScreen">
     <div class="screen-header">
       <span id="roomListHeaderTitle">💬 トーク一覧</span>
@@ -482,6 +496,7 @@
     </div>
   </div>
 
+  <!-- 3. 自分のプロフィール編集画面 -->
   <div class="full-screen hidden" id="myProfileEditScreen">
     <div class="screen-header">
       <span>👤 プロフィール設定</span>
@@ -517,6 +532,7 @@
     </div>
   </div>
 
+  <!-- 4. ノート編集モーダル -->
   <div class="modal-overlay hidden" id="editNoteModal">
     <div class="modal-box">
       <div style="font-size:16px; font-weight:bold; color:#0f172a; margin-bottom:10px;">✏️ ノートを編集</div>
@@ -543,6 +559,7 @@
     </div>
   </div>
 
+  <!-- 5. イベント編集モーダル -->
   <div class="modal-overlay hidden" id="editEventModal">
     <div class="modal-box">
       <div style="font-size:16px; font-weight:bold; color:#0f172a; margin-bottom:10px;">✏️ イベントを編集</div>
@@ -589,20 +606,22 @@
     </div>
   </div>
 
-  <div class="modal-overlay hidden" id="adminAuthModal">
+  <!-- 6. 管理人専用ログイン・パスワード認証モーダル -->
+  <div class="modal-overlay hidden" id="adminAuthModal" style="z-index: 55;">
     <div class="modal-box" style="text-align: center;">
-      <div style="font-size: 30px; margin-bottom: 6px;">🔐</div>
-      <div style="font-size: 16px; font-weight: bold; color: #0f172a; margin-bottom: 4px;">管理人専用認証</div>
+      <div style="font-size: 32px; margin-bottom: 6px;">🔐</div>
+      <div style="font-size: 16px; font-weight: bold; color: #0f172a; margin-bottom: 4px;">管理人専用ログイン</div>
       <div style="font-size: 12px; color: #64748b; margin-bottom: 12px;">
-        管理画面を開くにはパスワードを入力してください
+        管理人パスワードを入力してください
       </div>
       <input type="password" id="adminPasswordInput" class="text-input" placeholder="パスワードを入力" inputmode="numeric" style="text-align:center; font-size:18px; letter-spacing:3px;" />
-      <button id="adminPasswordSubmitBtn" class="primary-btn">管理画面を開く</button>
+      <button id="adminPasswordSubmitBtn" class="primary-btn">管理人としてログイン</button>
       <a id="sendAdminMailLink" href="#" class="mail-btn">✉️ メールで管理画面URLを開く</a>
       <button id="closeAdminAuthBtn" class="secondary-btn">キャンセル</button>
     </div>
   </div>
 
+  <!-- 7. 管理人専用コントロール画面 -->
   <div class="full-screen hidden" id="adminDashboardScreen">
     <div class="screen-header">
       <span>⚙️ 管理人専用コントロール画面</span>
@@ -667,6 +686,7 @@
     </div>
   </div>
 
+  <!-- 8. 一般メンバー用グループ作成画面 -->
   <div class="full-screen hidden" id="createGroupScreen">
     <div class="screen-header">
       <span>💬 新しいグループを作成</span>
@@ -702,6 +722,7 @@
     </div>
   </div>
 
+  <!-- 9. イベント詳細モーダル -->
   <div class="modal-overlay hidden" id="eventDetailModal">
     <div class="modal-box">
       <div style="font-size: 12px; color: #06c755; font-weight: bold;" id="evDetailDate">📅 2026-11-20</div>
@@ -717,6 +738,7 @@
     </div>
   </div>
 
+  <!-- 10. プロフィール＆Xアカウントジャンプモーダル -->
   <div class="modal-overlay hidden" id="userProfileModal">
     <div class="modal-box" style="text-align: center; align-items: center;">
       <div class="avatar-preview" id="profileModalAvatar" style="width: 72px; height: 72px; margin-bottom: 10px;">🐱</div>
@@ -728,6 +750,7 @@
     </div>
   </div>
 
+  <!-- メインヘッダー -->
   <div class="header">
     <div class="header-left">
       <button id="menuBtn" class="icon-btn">≡ 一覧<span id="totalUnreadBadge" class="total-unread-dot" style="display:none;">0</span></button>
@@ -740,21 +763,24 @@
       <button id="notifyToggleBtn" class="icon-btn">🔔 通知</button>
       <button id="openMyProfileBtn" class="icon-btn">👤</button>
       <button id="quickInviteBtn" class="icon-btn invite-btn">🔗</button>
-      <button id="openAdminScreenBtn" class="icon-btn admin-btn">⚙️</button>
+      <button id="openAdminScreenBtn" class="icon-btn admin-btn" style="display:none;">⚙️</button>
     </div>
   </div>
 
+  <!-- 管理人監視モードバナー -->
   <div class="monitor-banner hidden" id="adminMonitorBanner">
     <span>👁️ 管理人監視モードで閲覧中（メンバー一覧には非表示）</span>
     <button id="joinMonitoredRoomBtn" style="background:#f59e0b; color:#0f172a; border:none; padding:3px 7px; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer;">＋正式参加</button>
   </div>
 
+  <!-- 3タブメニュー -->
   <div class="nav-tabs">
     <button class="nav-tab active" data-tab="talk">💬 トーク</button>
     <button class="nav-tab" data-tab="note">📝 ノート</button>
     <button class="nav-tab" data-tab="event">📅 イベント</button>
   </div>
 
+  <!-- タブ1：トーク -->
   <div class="tab-pane" id="tab-talk">
     <div class="chat-area" id="chatArea"></div>
 
@@ -781,6 +807,7 @@
     <div class="sticker-drawer hidden" id="stickerDrawer"></div>
   </div>
 
+  <!-- タブ2：ノート -->
   <div class="tab-pane hidden" id="tab-note">
     <div class="board-area">
       <div class="card">
@@ -804,6 +831,7 @@
     </div>
   </div>
 
+  <!-- タブ3：カレンダー＆イベント -->
   <div class="tab-pane hidden" id="tab-event">
     <div class="board-area">
       <div class="card">
@@ -1621,6 +1649,9 @@
     activeChatMsgIndex = null;
   });
 
+  // =========================================================
+  // 初回入室画面＆管理人専用ログインボタン
+  // =========================================================
   const agreeTermsCheckbox = document.getElementById('agreeTermsCheckbox');
   const joinBtn = document.getElementById('joinBtn');
   agreeTermsCheckbox.addEventListener('change', () => {
@@ -1643,6 +1674,10 @@
       selectedAvatarIsImg = true;
       document.getElementById('avatarPreview').innerHTML = `<img src="${selectedAvatar}" />`;
     });
+  });
+
+  document.getElementById('joinScreenAdminLoginBtn').addEventListener('click', () => {
+    openAdminAuthModal();
   });
 
   joinBtn.addEventListener('click', () => {
@@ -1703,6 +1738,9 @@
     renderAll();
   });
 
+  // =========================================================
+  // 自分のプロフィール編集画面
+  // =========================================================
   const editProfileXToggle = document.getElementById('editProfileXToggle');
   const editProfileXInputWrap = document.getElementById('editProfileXInputWrap');
   editProfileXToggle.addEventListener('change', () => {
@@ -1798,6 +1836,9 @@
     alert('プロフィールを更新しました！');
   });
 
+  // =========================================================
+  // 管理人専用ログイン・パスワード認証＆コントロール画面
+  // =========================================================
   function openAdminAuthModal() {
     document.getElementById('adminPasswordInput').value = '';
     document.getElementById('sendAdminMailLink').href = buildAdminMailtoHref();
@@ -1813,6 +1854,37 @@
     const inputPass = document.getElementById('adminPasswordInput').value.trim();
     if (inputPass === sharedState.adminPassword) {
       document.getElementById('adminAuthModal').classList.add('hidden');
+
+      if (!currentUser) {
+        const inputNick = document.getElementById('nicknameInput').value.trim() || 'みやっち★';
+        const adminId = sharedState.creatorId || ('u_admin_' + Date.now());
+        sharedState.creatorId = adminId;
+        currentUser = {
+          id: adminId,
+          name: inputNick,
+          avatar: selectedAvatar || '👑',
+          isImg: selectedAvatarIsImg,
+          xHandle: '',
+          agreedTermsAt: new Date().toISOString()
+        };
+        saveLocalUser();
+        const mainRoom = sharedState.rooms[0];
+        if (mainRoom) {
+          normalizeRoomArrays(mainRoom);
+          if (!mainRoom.members.some(m => m.id === adminId)) {
+            mainRoom.members.push({ ...currentUser, role: 'admin' });
+          }
+          currentRoomId = mainRoom.id;
+        }
+        saveShared();
+        document.getElementById('joinScreen').classList.add('hidden');
+        renderAll();
+      } else if (!sharedState.creatorId) {
+        sharedState.creatorId = currentUser.id;
+        saveShared();
+        renderAll();
+      }
+
       openAdminDashboard();
     } else {
       alert('パスワードが違います。');
@@ -2188,6 +2260,7 @@
     const isMemberOfRoom = (room.members || []).some(m => m.id === currentUser.id);
     const isMonitorMode = isGlobalAdmin && !isMemberOfRoom;
 
+    document.getElementById('openAdminScreenBtn').style.display = isGlobalAdmin ? 'inline-block' : 'none';
     document.getElementById('adminMonitorBanner').classList.toggle('hidden', !isMonitorMode);
 
     const myRole = getMyRoleInRoom(room);
@@ -3026,10 +3099,16 @@
       if (isAdminDirectUrl && !isInitialLoadDone) {
         openAdminAuthModal();
       }
-    } else if (invitedRoomId) {
-      const target = sharedState.rooms.find(r => r.id === invitedRoomId);
-      if (target) {
-        document.getElementById('joinRoomNotice').textContent = '専用招待リンクから参加します（利用規約を確認してください）';
+    } else {
+      if (invitedRoomId) {
+        const target = sharedState.rooms.find(r => r.id === invitedRoomId);
+        if (target) {
+          document.getElementById('joinRoomNotice').textContent = '専用招待リンクから参加します（利用規約を確認してください）';
+        }
+      }
+      if (isAdminDirectUrl && !isInitialLoadDone) {
+        isInitialLoadDone = true;
+        openAdminAuthModal();
       }
     }
   }
