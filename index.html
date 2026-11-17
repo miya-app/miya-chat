@@ -28,6 +28,40 @@
     .auto-link { color: #0284c7; text-decoration: underline; word-break: break-all; font-weight: bold; }
     .mine .bubble .auto-link { color: #0369a1; }
 
+    /* LINE風メンションハイライト */
+    .mention-tag {
+      color: #0284c7;
+      font-weight: bold;
+      background: rgba(2, 132, 199, 0.12);
+      padding: 0 4px;
+      border-radius: 4px;
+    }
+    .mine .bubble .mention-tag {
+      color: #065f46;
+      background: rgba(6, 95, 70, 0.14);
+    }
+
+    /* メンション候補ポップアップリスト */
+    .mention-popup {
+      background: #ffffff;
+      border-top: 1px solid #cbd5e1;
+      max-height: 165px;
+      overflow-y: auto;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.12);
+      z-index: 20;
+    }
+    .mention-popup.hidden { display: none; }
+    .mention-cand-row {
+      display: flex; align-items: center; gap: 9px;
+      padding: 8px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer;
+    }
+    .mention-cand-row:active { background: #e8f9ef; }
+    .mention-cand-avatar {
+      width: 28px; height: 28px; border-radius: 50%; background: #f1f5f9;
+      display: flex; justify-content: center; align-items: center; font-size: 14px; overflow: hidden; flex-shrink: 0;
+    }
+    .mention-cand-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
     .form-apply-btn {
       display: flex; justify-content: center; align-items: center; gap: 6px;
       width: 100%; padding: 9px 12px; background-color: #06c755; color: #ffffff;
@@ -213,7 +247,8 @@
     }
     .icon-btn.admin-btn { background: #f59e0b; color: #0f172a; }
     .icon-btn.invite-btn { background: #06c755; }
-    .icon-btn.notify-on { background: #3b82f6; }
+    .icon-btn.notify-on { background: #3b82f6; color: #fff; }
+    .icon-btn.notify-off { background: rgba(255,255,255,0.12); color: #cbd5e1; }
     .total-unread-dot {
       position: absolute; top: -4px; right: -4px; background: #ef4444; color: #fff;
       font-size: 9px; font-weight: bold; min-width: 16px; height: 16px; border-radius: 8px;
@@ -294,17 +329,21 @@
     .file-meta { overflow: hidden; }
     .file-name { font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .file-size { font-size: 10px; color: #64748b; margin-top: 2px; }
-    .msg-time { font-size: 10px; color: #f1f5f9; white-space: nowrap; text-align: right; line-height: 1.2; }
+    .msg-time { font-size: 10px; color: #f1f5f9; white-space: nowrap; text-align: right; line-height: 1.25; }
+    .read-status-label { font-size: 9px; font-weight: bold; color: #e2e8f0; text-shadow: 0 1px 1px rgba(0,0,0,0.2); }
     .msg-menu-btn {
       background: rgba(0,0,0,0.24); color: #fff; border: none; border-radius: 50%;
       width: 20px; height: 20px; font-size: 11px; line-height: 1; cursor: pointer; flex-shrink: 0;
     }
 
-    /* 複数行・段落入力対応の入力エリア */
     .input-area { background: #ffffff; padding: 7px 6px; display: flex; gap: 4px; align-items: flex-end; }
     .attach-btn {
       background: #f1f5f9; border: none; border-radius: 50%; width: 32px; height: 34px;
       font-size: 15px; display: flex; justify-content: center; align-items: center; cursor: pointer; flex-shrink: 0;
+    }
+    .sticker-inline-btn {
+      background: #fef9c3; border: 1px solid #fde047; border-radius: 50%; width: 34px; height: 34px;
+      font-size: 17px; display: flex; justify-content: center; align-items: center; cursor: pointer; flex-shrink: 0;
     }
     .msg-textarea {
       flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 18px;
@@ -384,7 +423,6 @@
       display: flex; justify-content: center; align-items: center; flex-shrink: 0; margin-left: 6px;
     }
 
-    /* グループメンバー一覧モーダル用 */
     .member-list-item {
       display: flex; align-items: center; gap: 10px; padding: 9px 6px;
       border-bottom: 1px solid #f1f5f9; cursor: pointer;
@@ -417,7 +455,7 @@
   <div class="modal-overlay hidden" id="roomMembersModal" onclick="closeRoomMembersModal()">
     <div class="modal-box" onclick="event.stopPropagation()">
       <div style="font-size:15px; font-weight:bold; color:#0f172a; margin-bottom:2px;" id="membersModalTitle">👥 グループメンバー</div>
-      <div style="font-size:11px; color:#64748b; margin-bottom:10px;">メンバーをタップするとプロフィールや𝕏を確認できます</div>
+      <div style="font-size:11px; color:#64748b; margin-bottom:10px;">メンバーをタップするとプロフィールやメンションができます</div>
       <div id="roomMembersListEl" style="max-height:52vh; overflow-y:auto;"></div>
       <button type="button" onclick="closeRoomMembersModal()" class="secondary-btn">閉じる</button>
     </div>
@@ -754,19 +792,20 @@
     </div>
   </div>
 
-  <!-- 10. プロフィール＆Xアカウントジャンプモーダル -->
+  <!-- 10. プロフィール＆メンション＆Xアカウントジャンプモーダル -->
   <div class="modal-overlay hidden" id="userProfileModal">
     <div class="modal-box" style="text-align: center; align-items: center;">
       <div class="avatar-preview" id="profileModalAvatar" style="width: 72px; height: 72px; margin-bottom: 10px;">🐱</div>
       <div style="font-size: 17px; font-weight: bold; color: #0f172a;" id="profileModalName">ユーザー名</div>
       <div style="font-size: 12px; color: #64748b; margin-top: 2px;" id="profileModalRole">メンバー</div>
-      <div id="profileModalXArea" style="width: 100%; margin-top: 12px;"></div>
+      <button id="mentionUserFromModalBtn" class="primary-btn" style="margin-top:10px; background:#0284c7; padding:10px; font-size:13px;">＠ この人にメンションする</button>
+      <div id="profileModalXArea" style="width: 100%; margin-top: 10px;"></div>
       <button id="openMyProfileEditFromModalBtn" class="secondary-btn" style="display:none; background:#06c755; color:#fff;">✏️ プロフィール（名前・アイコン・𝕏）を編集</button>
       <button id="closeProfileModalBtn" class="secondary-btn">閉じる</button>
     </div>
   </div>
 
-  <!-- メインヘッダー（グループ名タップでメンバー一覧表示） -->
+  <!-- メインヘッダー -->
   <div class="header">
     <div class="header-left">
       <button id="menuBtn" class="icon-btn">≡ 一覧<span id="totalUnreadBadge" class="total-unread-dot" style="display:none;">0</span></button>
@@ -776,7 +815,7 @@
       </div>
     </div>
     <div class="header-right">
-      <button id="notifyToggleBtn" class="icon-btn">🔔 通知</button>
+      <button id="notifyToggleBtn" class="icon-btn notify-on">🔔 通知ON</button>
       <button id="openMyProfileBtn" class="icon-btn">👤</button>
       <button id="quickInviteBtn" class="icon-btn invite-btn">🔗</button>
       <button id="openAdminScreenBtn" class="icon-btn admin-btn" style="display:none;">⚙️</button>
@@ -794,6 +833,9 @@
   <div class="tab-pane" id="tab-talk">
     <div class="chat-area" id="chatArea"></div>
 
+    <!-- @メンション候補リスト -->
+    <div class="mention-popup hidden" id="mentionPopup"></div>
+
     <div class="reply-preview-bar hidden" id="replyPreviewBar">
       <div style="overflow:hidden;">
         <div style="font-weight:bold; color:#047857;" id="replyTargetAuthor">↩️ 〇〇 に返信</div>
@@ -806,11 +848,11 @@
       <input type="file" id="imgInput" accept="image/*" style="display:none;" />
       <input type="file" id="vidInput" accept="video/*" style="display:none;" />
       <input type="file" id="fileInput" style="display:none;" />
-      <button type="button" id="btnSticker" class="attach-btn" title="スタンプ">😊</button>
       <button type="button" id="btnImg" class="attach-btn" title="画像">📷</button>
       <button type="button" id="btnVid" class="attach-btn" title="動画">🎬</button>
       <button type="button" id="btnFile" class="attach-btn" title="ファイル">📎</button>
-      <textarea id="msgInput" class="msg-textarea" rows="1" placeholder="メッセージを入力（改行で段落）"></textarea>
+      <button type="button" id="btnSticker" class="sticker-inline-btn" title="スタンプ">😊</button>
+      <textarea id="msgInput" class="msg-textarea" rows="1" placeholder="メッセージ（@でメンション）"></textarea>
       <button type="submit" class="send-btn">送信</button>
     </form>
 
@@ -1005,6 +1047,7 @@
 
   const LOCAL_USER_KEY = 'miyachat_my_profile_v1';
   const LOCAL_READ_KEY = 'miyachat_read_counts_v1';
+  const LOCAL_NOTIFY_KEY = 'miyachat_notify_enabled_v1';
 
   const DEFAULT_TERMS = `【みやチャット 利用規約】
 1. 他のメンバーへの誹謗中傷、迷惑行為、荒らし行為は禁止します。
@@ -1038,12 +1081,12 @@
   let sharedState = getDefaultSharedState();
   let currentUser = JSON.parse(localStorage.getItem(LOCAL_USER_KEY)) || null;
   let readCounts = JSON.parse(localStorage.getItem(LOCAL_READ_KEY)) || {};
+  let isNotifyEnabled = localStorage.getItem(LOCAL_NOTIFY_KEY) !== 'false';
   let currentRoomId = null;
 
   let isInitialLoadDone = false;
   let lastNotifiedSignature = '';
 
-  // 重複メンバーを除去して配列を正規化
   function normalizeRoomArrays(r) {
     if (!r.members) r.members = [];
     const seenIds = new Set();
@@ -1062,7 +1105,6 @@
     });
   }
 
-  // 安全なFirebase保存（初回データ受信完了後にのみ書き込み、上書きリセットを防止）
   function saveShared(force = false) {
     if (!dbRef || !isFirebaseConnected) return;
     if (!hasReceivedInitialFirebase && !force) return;
@@ -1075,10 +1117,29 @@
     }
   }
 
+  // 既読記録＆メッセージごとの既読ユーザーID更新（管理人のステルス閲覧は除外）
   function markRoomAsRead(room) {
-    if (!room) return;
-    readCounts[room.id] = (room.messages || []).length;
+    if (!room || !currentUser) return;
+    const msgs = room.messages || [];
+    readCounts[room.id] = msgs.length;
     localStorage.setItem(LOCAL_READ_KEY, JSON.stringify(readCounts));
+
+    const isMemberOfRoom = (room.members || []).some(m => m.id === currentUser.id);
+    if (!isMemberOfRoom) return; // 管理人未参加のステルス閲覧時は既読をつけない
+
+    let updated = false;
+    msgs.forEach(m => {
+      if (m.type === 'msg' && m.senderId !== currentUser.id) {
+        if (!m.readBy) m.readBy = [];
+        if (!m.readBy.includes(currentUser.id)) {
+          m.readBy.push(currentUser.id);
+          updated = true;
+        }
+      }
+    });
+    if (updated) {
+      saveShared();
+    }
   }
 
   function getAccessibleRooms() {
@@ -1108,31 +1169,38 @@
 
   function updateNotifyBtnUI() {
     const btn = document.getElementById('notifyToggleBtn');
-    if ('Notification' in window && Notification.permission === 'granted') {
+    if (isNotifyEnabled) {
       btn.textContent = '🔔 通知ON';
       btn.classList.add('notify-on');
+      btn.classList.remove('notify-off');
     } else {
       btn.textContent = '🔕 通知OFF';
       btn.classList.remove('notify-on');
+      btn.classList.add('notify-off');
     }
   }
 
   document.getElementById('notifyToggleBtn').addEventListener('click', async () => {
-    if (!('Notification' in window)) {
-      alert('このブラウザはシステム通知に対応していません。画面内の通知バナーのみ動作します。');
-      return;
-    }
-    const perm = await Notification.requestPermission();
-    updateNotifyBtnUI();
-    if (perm === 'granted') {
-      playNotifyBeep();
-      showPushNotification('みやチャット', '通知がONになりました！所属ルームの新着をお知らせします。');
+    if (isNotifyEnabled) {
+      isNotifyEnabled = false;
+      localStorage.setItem(LOCAL_NOTIFY_KEY, 'false');
+      updateNotifyBtnUI();
+      showInAppToast('🔕 通知をOFFにしました（新着通知音・バナーを停止します）');
     } else {
-      alert('通知がブロックされています。ブラウザの設定から通知を許可してください。');
+      isNotifyEnabled = true;
+      localStorage.setItem(LOCAL_NOTIFY_KEY, 'true');
+      updateNotifyBtnUI();
+      playNotifyBeep();
+      showInAppToast('🔔 通知をONにしました！新着をお知らせします');
+
+      if ('Notification' in window && Notification.permission === 'default') {
+        try { await Notification.requestPermission(); } catch (e) {}
+      }
     }
   });
 
   function playNotifyBeep() {
+    if (!isNotifyEnabled) return;
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = ctx.createOscillator();
@@ -1157,6 +1225,7 @@
   }
 
   function showPushNotification(title, body) {
+    if (!isNotifyEnabled) return;
     showInAppToast(`${title}：${body}`);
     playNotifyBeep();
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -1191,7 +1260,10 @@
         if (lastM.type === 'msg' && lastM.senderId !== currentUser.id) {
           const sig = `msg_${r.id}_${msgs.length}_${lastM.time}_${lastM.text || lastM.stickerId || lastM.mediaType}`;
           latestSig = sig;
-          notifyTitle = `💬 ${lastM.senderName}（${r.showName === false ? 'グループ' : r.name}）`;
+          const isMentionedMe = lastM.text && (lastM.text.includes(`@${currentUser.name}`) || lastM.text.includes('@All'));
+          notifyTitle = isMentionedMe
+            ? `📣 ${lastM.senderName} があなたにメンション！`
+            : `💬 ${lastM.senderName}（${r.showName === false ? 'グループ' : r.name}）`;
           if (lastM.stickerId) {
             const st = CHAT_STICKERS.find(s => s.id === lastM.stickerId);
             notifyBody = `スタンプ「${st ? st.text : ''}」を送信しました`;
@@ -1253,6 +1325,19 @@
 
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]));
+  }
+
+  // URLリンク化＋@メンションのハイライト表示
+  function formatMessageText(str) {
+    const escaped = escapeHtml(str || '');
+    // 1. URLをリンク化
+    const withLinks = escaped.replace(/(https?:\/\/[^\s<>"'　]+)/g, (url) => {
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="auto-link" onclick="event.stopPropagation()">${url}</a>`;
+    });
+    // 2. @メンション（@ユーザー名 または @All）をハイライト
+    return withLinks.replace(/(@[^\s@<>"'　]+)/g, (mention) => {
+      return `<span class="mention-tag">${mention}</span>`;
+    });
   }
 
   function linkifyText(str) {
@@ -1429,9 +1514,6 @@
     document.getElementById('lightboxImgEl').src = '';
   };
 
-  // =========================================================
-  // グループメンバー一覧モーダル（LINE風）
-  // =========================================================
   window.openRoomMembersModal = () => {
     const room = getCurrentRoom();
     if (!room) return;
@@ -1480,9 +1562,6 @@
     document.getElementById('roomMembersModal').classList.add('hidden');
   };
 
-  // =========================================================
-  // スタンプ・リプライ・アクションメニュー
-  // =========================================================
   const stickerDrawerEl = document.getElementById('stickerDrawer');
   CHAT_STICKERS.forEach(st => {
     const btn = document.createElement('button');
@@ -1502,6 +1581,7 @@
 
   function sendStickerMessage(stickerId) {
     const room = getCurrentRoom();
+    const isMemberOfRoom = (room.members || []).some(m => m.id === currentUser.id);
     const msgObj = {
       type: 'msg',
       senderId: currentUser.id,
@@ -1511,6 +1591,7 @@
       role: getMyRoleInRoom(room),
       xHandle: currentUser.xHandle || '',
       stickerId: stickerId,
+      readBy: isMemberOfRoom ? [currentUser.id] : [],
       time: getTime()
     };
     if (pendingReplyObj) {
@@ -1618,6 +1699,17 @@
       }
     });
 
+    if (!isMine) {
+      menuItems.push({
+        icon: '＠',
+        label: 'メンション',
+        onClick: () => {
+          closeMsgActionModal();
+          insertMentionToInput(m.senderName);
+        }
+      });
+    }
+
     if (canEdit) {
       menuItems.push({
         icon: '✏️',
@@ -1724,6 +1816,90 @@
   });
 
   // =========================================================
+  // @メンション候補サジェスト＆挿入処理
+  // =========================================================
+  const msgInputEl = document.getElementById('msgInput');
+  const mentionPopupEl = document.getElementById('mentionPopup');
+
+  function insertMentionToInput(targetName) {
+    const val = msgInputEl.value;
+    const match = val.match(/(?:^|\s)[@＠]([^\s@＠]*)$/);
+    if (match) {
+      const idx = val.lastIndexOf(match[0]);
+      const prefix = match[0].startsWith(' ') || match[0].startsWith('　') ? match[0][0] : '';
+      msgInputEl.value = val.slice(0, idx) + prefix + `@${targetName} `;
+    } else {
+      const needSpace = val.length > 0 && !val.endsWith(' ') && !val.endsWith('\n') ? ' ' : '';
+      msgInputEl.value = val + needSpace + `@${targetName} `;
+    }
+    mentionPopupEl.classList.add('hidden');
+    autoResizeMsgInput();
+    msgInputEl.focus();
+  }
+
+  function updateMentionSuggestions() {
+    const val = msgInputEl.value;
+    const cursorPos = msgInputEl.selectionStart || val.length;
+    const textBeforeCursor = val.slice(0, cursorPos);
+    const match = textBeforeCursor.match(/(?:^|\s)[@＠]([^\s@＠]*)$/);
+
+    if (!match) {
+      mentionPopupEl.classList.add('hidden');
+      return;
+    }
+
+    const keyword = match[1].toLowerCase();
+    const room = getCurrentRoom();
+    const candidates = [
+      { id: 'all', name: 'All', sub: 'ルーム全員にメンション', avatar: '📣', isImg: false }
+    ];
+
+    (room.members || []).forEach(m => {
+      if (m.id === currentUser.id) return;
+      candidates.push({
+        id: m.id,
+        name: m.name,
+        sub: m.role === 'admin' ? '👑 管理人' : m.role === 'co-admin' ? '🛡️ 共同管理人' : 'メンバー',
+        avatar: m.avatar || '🐱',
+        isImg: Boolean(m.isImg)
+      });
+    });
+
+    const filtered = candidates.filter(c => c.name.toLowerCase().includes(keyword));
+    if (filtered.length === 0) {
+      mentionPopupEl.classList.add('hidden');
+      return;
+    }
+
+    mentionPopupEl.innerHTML = '';
+    filtered.forEach(c => {
+      const row = document.createElement('div');
+      row.className = 'mention-cand-row';
+      const avHtml = c.isImg ? `<img src="${c.avatar}" />` : c.avatar;
+      row.innerHTML = `
+        <div class="mention-cand-avatar">${avHtml}</div>
+        <div style="flex:1; overflow:hidden;">
+          <div style="font-size:13px; font-weight:bold; color:#0f172a;">@${escapeHtml(c.name)}</div>
+          <div style="font-size:10px; color:#64748b;">${escapeHtml(c.sub)}</div>
+        </div>
+      `;
+      row.addEventListener('click', () => insertMentionToInput(c.name));
+      mentionPopupEl.appendChild(row);
+    });
+
+    mentionPopupEl.classList.remove('hidden');
+  }
+
+  function autoResizeMsgInput() {
+    msgInputEl.style.height = 'auto';
+    msgInputEl.style.height = Math.min(msgInputEl.scrollHeight, 110) + 'px';
+  }
+  msgInputEl.addEventListener('input', () => {
+    autoResizeMsgInput();
+    updateMentionSuggestions();
+  });
+
+  // =========================================================
   // 初回入室画面＆二重ログイン防止処理
   // =========================================================
   const agreeTermsCheckbox = document.getElementById('agreeTermsCheckbox');
@@ -1769,7 +1945,6 @@
     const targetRoom = (invitedRoomId && sharedState.rooms.find(r => r.id === invitedRoomId)) || sharedState.rooms[0];
     const isFirstCreator = !sharedState.creatorId;
 
-    // すでに同名の既存メンバーがルームにいる場合はそのIDを引き継ぎ、二重登録を防ぐ
     let existingMember = null;
     if (targetRoom) {
       normalizeRoomArrays(targetRoom);
@@ -1913,9 +2088,6 @@
     alert('プロフィールを更新しました！');
   });
 
-  // =========================================================
-  // 管理人専用ログイン・パスワード認証＆コントロール画面
-  // =========================================================
   function openAdminAuthModal() {
     document.getElementById('adminPasswordInput').value = '';
     document.getElementById('sendAdminMailLink').href = buildAdminMailtoHref();
@@ -2225,9 +2397,6 @@
     renderAll();
   });
 
-  // =========================================================
-  // LINE風トークルーム一覧画面（監視表記なし・すっきり表示）
-  // =========================================================
   function openRoomListScreen() {
     const listEl = document.getElementById('roomListEl');
     listEl.innerHTML = '';
@@ -2350,6 +2519,9 @@
     alert(`この部屋専用の招待URLをコピーしました！\n\n${url}`);
   });
 
+  // =========================================================
+  // トーク描画（既読数表示＋メンションハイライト付き）
+  // =========================================================
   function renderMessages(room) {
     const chatArea = document.getElementById('chatArea');
     chatArea.innerHTML = '';
@@ -2393,7 +2565,7 @@
               </div>
             </a>`;
         } else {
-          bodyHtml = `<div class="bubble" onclick="openMsgActionModal(${idx})">${replyHtml}${linkifyText(m.text)}</div>`;
+          bodyHtml = `<div class="bubble" onclick="openMsgActionModal(${idx})">${replyHtml}${formatMessageText(m.text)}</div>`;
         }
 
         let reactionPillsHtml = '';
@@ -2408,6 +2580,15 @@
           });
           if (pills.length > 0) {
             reactionPillsHtml = `<div class="reaction-pills">${pills.join('')}</div>`;
+          }
+        }
+
+        // 既読数カウント（送信者本人を除いた既読メンバー数）
+        let readCountHtml = '';
+        if (isMine && Array.isArray(m.readBy)) {
+          const readersCount = m.readBy.filter(uid => uid !== m.senderId).length;
+          if (readersCount > 0) {
+            readCountHtml = `<div class="read-status-label">既読 ${readersCount}</div>`;
           }
         }
 
@@ -2436,7 +2617,7 @@
               ${xBadgeHtml}
             </div>
             <div class="msg-content-wrap">
-              <div class="bubble-wrap">${bodyHtml}<div class="msg-time">${editedLabel}${m.time}</div>${menuDotBtn}</div>
+              <div class="bubble-wrap">${bodyHtml}<div class="msg-time">${readCountHtml}${editedLabel}${m.time}</div>${menuDotBtn}</div>
               ${reactionPillsHtml}
             </div>`;
         }
@@ -2446,20 +2627,13 @@
     chatArea.scrollTop = chatArea.scrollHeight;
   }
 
-  // 入力欄（textarea）の自動高さ調整と送信処理
-  const msgInputEl = document.getElementById('msgInput');
-  function autoResizeMsgInput() {
-    msgInputEl.style.height = 'auto';
-    msgInputEl.style.height = Math.min(msgInputEl.scrollHeight, 110) + 'px';
-  }
-  msgInputEl.addEventListener('input', autoResizeMsgInput);
-
   document.getElementById('chatForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const text = msgInputEl.value.trim();
     if (!text) return;
 
     const room = getCurrentRoom();
+    const isMemberOfRoom = (room.members || []).some(m => m.id === currentUser.id);
     const msgObj = {
       type: 'msg',
       senderId: currentUser.id,
@@ -2469,6 +2643,7 @@
       role: getMyRoleInRoom(room),
       xHandle: currentUser.xHandle || '',
       text: text,
+      readBy: isMemberOfRoom ? [currentUser.id] : [],
       time: getTime()
     };
     if (pendingReplyObj) {
@@ -2479,6 +2654,7 @@
     room.messages.push(msgObj);
     msgInputEl.value = '';
     msgInputEl.style.height = 'auto';
+    mentionPopupEl.classList.add('hidden');
     stickerDrawerEl.classList.add('hidden');
     markRoomAsRead(room);
     saveShared();
@@ -2488,6 +2664,7 @@
   function handleChatUpload(file, mediaType) {
     readAttachFile(file, mediaType, (res) => {
       const room = getCurrentRoom();
+      const isMemberOfRoom = (room.members || []).some(m => m.id === currentUser.id);
       room.messages.push({
         type: 'msg',
         senderId: currentUser.id,
@@ -2500,6 +2677,7 @@
         mediaData: res.data,
         fileName: res.name,
         fileSize: res.size,
+        readBy: isMemberOfRoom ? [currentUser.id] : [],
         time: getTime()
       });
       markRoomAsRead(room);
@@ -2514,16 +2692,22 @@
   document.getElementById('btnFile').addEventListener('click', () => document.getElementById('fileInput').click());
   document.getElementById('fileInput').addEventListener('change', (e) => { handleChatUpload(e.target.files[0], 'file'); e.target.value = ''; });
 
+  // プロフィールモーダル（メンションボタン付き）
+  let profileModalTargetName = '';
   window.openUserProfile = (userId, fallbackName, fallbackAvatar, fallbackIsImg, fallbackRole, fallbackX) => {
     const room = getCurrentRoom();
     const member = (room.members || []).find(m => m.id === userId) || {
       id: userId, name: fallbackName, avatar: fallbackAvatar, isImg: fallbackIsImg, role: fallbackRole, xHandle: fallbackX
     };
 
+    profileModalTargetName = member.name;
     document.getElementById('profileModalAvatar').innerHTML = member.isImg ? `<img src="${member.avatar}" />` : member.avatar;
     document.getElementById('profileModalName').textContent = member.name;
     const roleLabel = member.role === 'admin' ? '👑 管理人' : member.role === 'co-admin' ? '🛡️ 共同管理人' : member.role === 'leader' ? '⭐ リーダー' : 'メンバー';
     document.getElementById('profileModalRole').textContent = roleLabel;
+
+    const mentionBtn = document.getElementById('mentionUserFromModalBtn');
+    mentionBtn.style.display = (userId !== currentUser.id) ? 'block' : 'none';
 
     const xArea = document.getElementById('profileModalXArea');
     if (member.xHandle) {
@@ -2542,6 +2726,13 @@
     editBtn.style.display = (userId === currentUser.id) ? 'block' : 'none';
     document.getElementById('userProfileModal').classList.remove('hidden');
   };
+
+  document.getElementById('mentionUserFromModalBtn').addEventListener('click', () => {
+    document.getElementById('userProfileModal').classList.add('hidden');
+    if (profileModalTargetName) {
+      insertMentionToInput(profileModalTargetName);
+    }
+  });
 
   document.getElementById('closeProfileModalBtn').addEventListener('click', () => {
     document.getElementById('userProfileModal').classList.add('hidden');
@@ -3132,7 +3323,7 @@
   });
 
   // =========================================================
-  // 起動＆Firebaseリアルタイム同期リスナー（リセット防止設計）
+  // 起動＆Firebaseリアルタイム同期リスナー
   // =========================================================
   updateNotifyBtnUI();
 
@@ -3148,7 +3339,6 @@
     document.getElementById('joinTermsText').textContent = sharedState.termsText || DEFAULT_TERMS;
 
     if (currentUser) {
-      // 既存のFirebase上の自分のデータ（権限など）と同期し、重複を防ぐ
       if (!sharedState.creatorId && currentUser.id && currentUser.id.startsWith('u_admin_')) {
         sharedState.creatorId = currentUser.id;
       }
@@ -3202,7 +3392,6 @@
       const val = snapshot.val();
       hasReceivedInitialFirebase = true;
       if (!val) {
-        // データベースが完全に空のときだけ初期状態を保存
         saveShared(true);
         handleSyncedData(null);
       } else {
