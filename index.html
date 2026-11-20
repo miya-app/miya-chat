@@ -28,7 +28,6 @@
     .auto-link { color: #0284c7; text-decoration: underline; word-break: break-all; font-weight: bold; }
     .mine .bubble .auto-link { color: #0369a1; }
 
-    /* LINE風メンションハイライト */
     .mention-tag {
       color: #0284c7;
       font-weight: bold;
@@ -41,7 +40,6 @@
       background: rgba(6, 95, 70, 0.14);
     }
 
-    /* メンション候補ポップアップリスト */
     .mention-popup {
       background: #ffffff;
       border-top: 1px solid #cbd5e1;
@@ -263,7 +261,7 @@
       position: absolute; top: 52px; left: 12px; right: 12px;
       background: #0f172a; color: #fff; padding: 10px 14px; border-radius: 10px;
       font-size: 12px; font-weight: bold; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      display: none; border-left: 4px solid #06c755;
+      display: none; border-left: 4px solid #06c755; line-height: 1.4;
     }
     .inapp-toast.show { display: block; }
 
@@ -458,6 +456,24 @@
       <div style="font-size:11px; color:#64748b; margin-bottom:10px;">メンバーをタップするとプロフィールやメンションができます</div>
       <div id="roomMembersListEl" style="max-height:52vh; overflow-y:auto;"></div>
       <button type="button" onclick="closeRoomMembersModal()" class="secondary-btn">閉じる</button>
+    </div>
+  </div>
+
+  <!-- 通知設定・ヘルプモーダル -->
+  <div class="modal-overlay hidden" id="notifyHelpModal" onclick="closeNotifyHelpModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div style="font-size:16px; font-weight:bold; color:#0f172a; margin-bottom:6px;">🔔 スマホ通知（ロック画面・バナー）の設定</div>
+      <div id="notifyPermStatusText" style="font-size:12px; font-weight:bold; padding:8px 10px; border-radius:8px; margin-bottom:10px;"></div>
+      <div style="font-size:12px; color:#334155; line-height:1.6; margin-bottom:10px;">
+        LINEのようにスマホの通知欄へ届けるには、次の2つを行ってください：<br>
+        <strong>1. ホーム画面に追加してアイコンから開く</strong><br>
+        （AndroidはChrome右上「︙」→「ホーム画面に追加」、iPhoneはSafari下「共有」→「ホーム画面に追加」）<br>
+        <strong>2. ブラウザの通知許可を「許可」にする</strong><br>
+        もし「ブロック」になっている場合は、URL欄左端のアイコン（またはスマホの「設定」→「アプリ」→「Chrome」→「通知」）から許可に切り替えてください。
+      </div>
+      <button type="button" id="testSystemNotifyBtn" class="primary-btn" style="margin-bottom:6px;">🔔 テスト通知をスマホに送る</button>
+      <button type="button" id="turnOffNotifyInModalBtn" class="danger-btn" style="width:100%; padding:10px; font-size:12px;">🔕 通知をOFFにする</button>
+      <button type="button" onclick="closeNotifyHelpModal()" class="secondary-btn">閉じる</button>
     </div>
   </div>
 
@@ -815,7 +831,7 @@
       </div>
     </div>
     <div class="header-right">
-      <button id="notifyToggleBtn" class="icon-btn notify-on">🔔 通知ON</button>
+      <button id="notifyToggleBtn" class="icon-btn notify-off">🔕 通知</button>
       <button id="openMyProfileBtn" class="icon-btn">👤</button>
       <button id="quickInviteBtn" class="icon-btn invite-btn">🔗</button>
       <button id="openAdminScreenBtn" class="icon-btn admin-btn" style="display:none;">⚙️</button>
@@ -1117,7 +1133,6 @@
     }
   }
 
-  // 既読記録＆メッセージごとの既読ユーザーID更新（管理人のステルス閲覧は除外）
   function markRoomAsRead(room) {
     if (!room || !currentUser) return;
     const msgs = room.messages || [];
@@ -1125,7 +1140,7 @@
     localStorage.setItem(LOCAL_READ_KEY, JSON.stringify(readCounts));
 
     const isMemberOfRoom = (room.members || []).some(m => m.id === currentUser.id);
-    if (!isMemberOfRoom) return; // 管理人未参加のステルス閲覧時は既読をつけない
+    if (!isMemberOfRoom) return;
 
     let updated = false;
     msgs.forEach(m => {
@@ -1162,16 +1177,30 @@
     if (totalUnread > 0) {
       badge.textContent = totalUnread > 99 ? '99+' : totalUnread;
       badge.style.display = 'flex';
+      document.title = `(${totalUnread}) みやチャット`;
     } else {
       badge.style.display = 'none';
+      document.title = 'みやチャット';
     }
+  }
+
+  // =========================================================
+  // 全機種対応の通知許可＆テスト通知システム
+  // =========================================================
+  function hasSystemNotificationGranted() {
+    return ('Notification' in window) && Notification.permission === 'granted';
   }
 
   function updateNotifyBtnUI() {
     const btn = document.getElementById('notifyToggleBtn');
-    if (isNotifyEnabled) {
+    const sysGranted = hasSystemNotificationGranted();
+    if (isNotifyEnabled && sysGranted) {
       btn.textContent = '🔔 通知ON';
       btn.classList.add('notify-on');
+      btn.classList.remove('notify-off');
+    } else if (isNotifyEnabled && !sysGranted) {
+      btn.textContent = '🔔 通知許可';
+      btn.classList.remove('notify-on');
       btn.classList.remove('notify-off');
     } else {
       btn.textContent = '🔕 通知OFF';
@@ -1180,23 +1209,93 @@
     }
   }
 
-  document.getElementById('notifyToggleBtn').addEventListener('click', async () => {
-    if (isNotifyEnabled) {
-      isNotifyEnabled = false;
-      localStorage.setItem(LOCAL_NOTIFY_KEY, 'false');
-      updateNotifyBtnUI();
-      showInAppToast('🔕 通知をOFFにしました（新着通知音・バナーを停止します）');
+  window.closeNotifyHelpModal = () => {
+    document.getElementById('notifyHelpModal').classList.add('hidden');
+  };
+
+  function openNotifyHelpModal() {
+    const statusEl = document.getElementById('notifyPermStatusText');
+    if (!('Notification' in window)) {
+      statusEl.style.background = '#fef3c7';
+      statusEl.style.color = '#92400e';
+      statusEl.textContent = '⚠️ このブラウザはロック画面通知に非対応です（ホーム画面に追加してから開いてください）';
+    } else if (Notification.permission === 'granted') {
+      statusEl.style.background = '#e8f9ef';
+      statusEl.style.color = '#047857';
+      statusEl.textContent = '✅ スマホへの通知許可：ON（ロック画面・上部バーに届きます）';
+    } else if (Notification.permission === 'denied') {
+      statusEl.style.background = '#fee2e2';
+      statusEl.style.color = '#dc2626';
+      statusEl.textContent = '🚫 ブラウザ側で通知が「ブロック」されています。下の案内から許可してください。';
     } else {
+      statusEl.style.background = '#e0f2fe';
+      statusEl.style.color = '#0369a1';
+      statusEl.textContent = 'ℹ️ 通知許可が未設定です。下のボタンを押して許可してください。';
+    }
+    document.getElementById('notifyHelpModal').classList.remove('hidden');
+  }
+
+  document.getElementById('notifyToggleBtn').addEventListener('click', async () => {
+    if (!('Notification' in window)) {
+      openNotifyHelpModal();
+      return;
+    }
+
+    if (Notification.permission === 'default') {
+      try {
+        const perm = await Notification.requestPermission();
+        isNotifyEnabled = (perm === 'granted');
+        localStorage.setItem(LOCAL_NOTIFY_KEY, isNotifyEnabled ? 'true' : 'false');
+        updateNotifyBtnUI();
+        if (perm === 'granted') {
+          sendActualSystemNotification('みやチャット', '通知がONになりました！新着メッセージがスマホに届きます。');
+        } else {
+          openNotifyHelpModal();
+        }
+      } catch (e) {
+        openNotifyHelpModal();
+      }
+      return;
+    }
+
+    if (Notification.permission === 'denied') {
+      openNotifyHelpModal();
+      return;
+    }
+
+    if (!isNotifyEnabled) {
       isNotifyEnabled = true;
       localStorage.setItem(LOCAL_NOTIFY_KEY, 'true');
       updateNotifyBtnUI();
-      playNotifyBeep();
-      showInAppToast('🔔 通知をONにしました！新着をお知らせします');
-
-      if ('Notification' in window && Notification.permission === 'default') {
-        try { await Notification.requestPermission(); } catch (e) {}
-      }
+      sendActualSystemNotification('みやチャット', '通知をONにしました！');
+    } else {
+      openNotifyHelpModal();
     }
+  });
+
+  document.getElementById('testSystemNotifyBtn').addEventListener('click', async () => {
+    if ('Notification' in window && Notification.permission !== 'granted') {
+      try {
+        const perm = await Notification.requestPermission();
+        updateNotifyBtnUI();
+        if (perm !== 'granted') {
+          alert('通知が許可されていません。ChromeのURLバー左端の設定、またはスマホ本体の設定から「通知」を許可してください。');
+          return;
+        }
+      } catch (e) {}
+    }
+    isNotifyEnabled = true;
+    localStorage.setItem(LOCAL_NOTIFY_KEY, 'true');
+    updateNotifyBtnUI();
+    sendActualSystemNotification('みやチャット（テスト通知）', 'このようにスマホの通知欄に表示されます！');
+  });
+
+  document.getElementById('turnOffNotifyInModalBtn').addEventListener('click', () => {
+    isNotifyEnabled = false;
+    localStorage.setItem(LOCAL_NOTIFY_KEY, 'false');
+    updateNotifyBtnUI();
+    closeNotifyHelpModal();
+    showInAppToast('🔕 通知をOFFにしました');
   });
 
   function playNotifyBeep() {
@@ -1221,25 +1320,31 @@
     const el = document.getElementById('inappToast');
     el.textContent = text;
     el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 3500);
+    setTimeout(() => el.classList.remove('show'), 3800);
   }
 
-  function showPushNotification(title, body) {
+  function sendActualSystemNotification(title, body) {
     if (!isNotifyEnabled) return;
     showInAppToast(`${title}：${body}`);
     playNotifyBeep();
+
     if ('Notification' in window && Notification.permission === 'granted') {
-      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      const options = {
+        body: body,
+        icon: './icon.png',
+        badge: './icon.png',
+        tag: 'miyachat-msg-' + Date.now(),
+        renotify: true,
+        vibrate: [200, 100, 200]
+      };
+      if (navigator.serviceWorker) {
         navigator.serviceWorker.ready.then(reg => {
-          reg.showNotification(title, {
-            body: body,
-            icon: './icon.png',
-            badge: './icon.png',
-            vibrate: [150, 80, 150]
-          });
-        }).catch(() => {});
+          reg.showNotification(title, options);
+        }).catch(() => {
+          try { new Notification(title, options); } catch (e) {}
+        });
       } else {
-        try { new Notification(title, { body, icon: './icon.png' }); } catch (e) {}
+        try { new Notification(title, options); } catch (e) {}
       }
     }
   }
@@ -1297,7 +1402,7 @@
 
     if (latestSig && latestSig !== lastNotifiedSignature) {
       lastNotifiedSignature = latestSig;
-      showPushNotification(notifyTitle, notifyBody);
+      sendActualSystemNotification(notifyTitle, notifyBody);
     }
   }
 
@@ -1327,14 +1432,11 @@
     return String(str).replace(/[&<>"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]));
   }
 
-  // URLリンク化＋@メンションのハイライト表示
   function formatMessageText(str) {
     const escaped = escapeHtml(str || '');
-    // 1. URLをリンク化
     const withLinks = escaped.replace(/(https?:\/\/[^\s<>"'　]+)/g, (url) => {
       return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="auto-link" onclick="event.stopPropagation()">${url}</a>`;
     });
-    // 2. @メンション（@ユーザー名 または @All）をハイライト
     return withLinks.replace(/(@[^\s@<>"'　]+)/g, (mention) => {
       return `<span class="mention-tag">${mention}</span>`;
     });
@@ -1815,9 +1917,6 @@
     activeChatMsgIndex = null;
   });
 
-  // =========================================================
-  // @メンション候補サジェスト＆挿入処理
-  // =========================================================
   const msgInputEl = document.getElementById('msgInput');
   const mentionPopupEl = document.getElementById('mentionPopup');
 
@@ -1899,9 +1998,6 @@
     updateMentionSuggestions();
   });
 
-  // =========================================================
-  // 初回入室画面＆二重ログイン防止処理
-  // =========================================================
   const agreeTermsCheckbox = document.getElementById('agreeTermsCheckbox');
   const joinBtn = document.getElementById('joinBtn');
   agreeTermsCheckbox.addEventListener('change', () => {
@@ -1930,7 +2026,7 @@
     openAdminAuthModal();
   });
 
-  joinBtn.addEventListener('click', () => {
+  joinBtn.addEventListener('click', async () => {
     if (!agreeTermsCheckbox.checked) return alert('利用規約に同意してください');
     const name = document.getElementById('nicknameInput').value.trim();
     if (!name) return alert('ニックネームを入力してください');
@@ -1940,6 +2036,17 @@
       const rawX = document.getElementById('xHandleInput').value.trim();
       if (!rawX) return alert('𝕏アカウントのユーザー名を入力するか、連携のチェックを外してください');
       xHandle = formatXDisplay(rawX);
+    }
+
+    // 参加ボタンタップ時に通知許可も自然にリクエスト
+    if ('Notification' in window && Notification.permission === 'default') {
+      try {
+        const perm = await Notification.requestPermission();
+        if (perm === 'granted') {
+          isNotifyEnabled = true;
+          localStorage.setItem(LOCAL_NOTIFY_KEY, 'true');
+        }
+      } catch (e) {}
     }
 
     const targetRoom = (invitedRoomId && sharedState.rooms.find(r => r.id === invitedRoomId)) || sharedState.rooms[0];
@@ -1984,15 +2091,13 @@
     }
 
     saveShared(true);
+    updateNotifyBtnUI();
     document.getElementById('joinScreen').classList.add('hidden');
     renderAll();
 
     if (isAdminDirectUrl) openAdminAuthModal();
   });
 
-  // =========================================================
-  // 自分のプロフィール編集画面
-  // =========================================================
   const editProfileXToggle = document.getElementById('editProfileXToggle');
   const editProfileXInputWrap = document.getElementById('editProfileXInputWrap');
   editProfileXToggle.addEventListener('change', () => {
@@ -2499,6 +2604,7 @@
     normalizeRoomArrays(room);
     markRoomAsRead(room);
     updateTotalUnreadBadge();
+    updateNotifyBtnUI();
 
     const isGlobalAdmin = currentUser.id === sharedState.creatorId;
     document.getElementById('openAdminScreenBtn').style.display = isGlobalAdmin ? 'inline-block' : 'none';
@@ -2519,9 +2625,6 @@
     alert(`この部屋専用の招待URLをコピーしました！\n\n${url}`);
   });
 
-  // =========================================================
-  // トーク描画（既読数表示＋メンションハイライト付き）
-  // =========================================================
   function renderMessages(room) {
     const chatArea = document.getElementById('chatArea');
     chatArea.innerHTML = '';
@@ -2583,7 +2686,6 @@
           }
         }
 
-        // 既読数カウント（送信者本人を除いた既読メンバー数）
         let readCountHtml = '';
         if (isMine && Array.isArray(m.readBy)) {
           const readersCount = m.readBy.filter(uid => uid !== m.senderId).length;
@@ -2692,7 +2794,6 @@
   document.getElementById('btnFile').addEventListener('click', () => document.getElementById('fileInput').click());
   document.getElementById('fileInput').addEventListener('change', (e) => { handleChatUpload(e.target.files[0], 'file'); e.target.value = ''; });
 
-  // プロフィールモーダル（メンションボタン付き）
   let profileModalTargetName = '';
   window.openUserProfile = (userId, fallbackName, fallbackAvatar, fallbackIsImg, fallbackRole, fallbackX) => {
     const room = getCurrentRoom();
