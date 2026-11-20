@@ -14,24 +14,24 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// アプリを閉じているときにプッシュ通知を受信した際のロック画面・通知バー表示
+// アプリを閉じている（バックグラウンド）状態のプッシュ通知受信処理
 messaging.onBackgroundMessage((payload) => {
-  const title = (payload.notification && payload.notification.title) || 'みやチャット';
-  const body = (payload.notification && payload.notification.body) || '新着メッセージが届きました';
-  const targetRoom = (payload.data && payload.data.roomId) || '';
+  const title = (payload.notification && payload.notification.title) || (payload.data && payload.data.title) || 'みやチャット';
+  const body = (payload.notification && payload.notification.body) || (payload.data && payload.data.body) || '新着メッセージが届きました';
+  const roomId = (payload.data && payload.data.roomId) || '';
 
   return self.registration.showNotification(title, {
     body: body,
     icon: './icon.png',
     badge: './icon.png',
-    tag: 'miyachat-push-' + Date.now(),
+    tag: 'miyachat-bg-' + Date.now(),
     renotify: true,
     vibrate: [200, 100, 200],
-    data: { roomId: targetRoom }
+    data: { roomId: roomId }
   });
 });
 
-// 通知バナーをタップしたときに「みやチャット」を開く
+// 通知バナーをタップしたら該当のトークルームを開く
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const roomId = event.notification.data && event.notification.data.roomId;
