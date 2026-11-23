@@ -21,6 +21,33 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.35); overflow: hidden;
     }
 
+    /* PWAホーム画面追加案内バナー */
+    .pwa-install-banner {
+      background: linear-gradient(90deg, #065f46, #047857);
+      color: #ffffff;
+      padding: 8px 12px;
+      font-size: 11px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      z-index: 60;
+      flex-shrink: 0;
+    }
+    .pwa-install-banner.hidden { display: none; }
+    .pwa-install-btn {
+      background: #ffffff;
+      color: #065f46;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 14px;
+      font-size: 11px;
+      font-weight: bold;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
     .auto-link { color: #0284c7; text-decoration: underline; word-break: break-all; font-weight: bold; }
     .mine .bubble .auto-link { color: #0369a1; }
 
@@ -168,30 +195,38 @@
     }
 
     .terms-box {
-      width: 100%; max-height: 100px; overflow-y: auto;
+      width: 100%; max-height: 82px; overflow-y: auto;
       background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px;
-      padding: 9px; font-size: 11px; color: #334155; line-height: 1.5;
-      text-align: left; white-space: pre-wrap; margin-bottom: 8px;
+      padding: 8px; font-size: 11px; color: #334155; line-height: 1.45;
+      text-align: left; white-space: pre-wrap; margin-bottom: 7px;
     }
 
-    .avatar-upload-wrap { position: relative; width: 74px; height: 74px; margin: 0 auto 6px; cursor: pointer; }
+    .avatar-upload-wrap { position: relative; width: 68px; height: 68px; margin: 0 auto 5px; cursor: pointer; }
     .avatar-preview {
-      width: 74px; height: 74px; border-radius: 50%; background: #f1f5f9; border: 3px solid #06c755;
-      display: flex; justify-content: center; align-items: center; font-size: 34px; overflow: hidden;
+      width: 68px; height: 68px; border-radius: 50%; background: #f1f5f9; border: 3px solid #06c755;
+      display: flex; justify-content: center; align-items: center; font-size: 32px; overflow: hidden;
     }
     .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
     .avatar-edit-badge {
       position: absolute; bottom: 0; right: 0; background: #06c755; color: #fff;
-      width: 24px; height: 24px; border-radius: 50%; font-size: 12px;
+      width: 22px; height: 22px; border-radius: 50%; font-size: 11px;
       display: flex; justify-content: center; align-items: center; border: 2px solid #fff;
     }
 
     .field-label { font-size: 11px; font-weight: bold; color: #475569; margin-bottom: 4px; display: block; text-align: left; }
     .text-input, .textarea-input, .select-input {
-      width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px;
-      font-size: 14px; margin-bottom: 9px; outline: none; background: #fff;
+      width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px;
+      font-size: 14px; margin-bottom: 8px; outline: none; background: #fff;
     }
     .text-input:focus, .textarea-input:focus { border-color: #06c755; }
+    .passcode-input-box {
+      border: 2px solid #06c755;
+      background: #f0fdf4;
+      font-weight: bold;
+      letter-spacing: 2px;
+      text-align: center;
+      font-size: 16px;
+    }
     .time-row { display: flex; align-items: center; gap: 6px; margin-bottom: 9px; }
     .time-row .text-input { margin-bottom: 0; flex: 1; padding: 9px 8px; font-size: 13px; }
     .primary-btn {
@@ -200,9 +235,9 @@
     }
     .primary-btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
     .admin-login-entry-btn {
-      width: 100%; padding: 10px; background-color: #222e42; color: #fde047;
+      width: 100%; padding: 9px; background-color: #222e42; color: #fde047;
       border: 1px solid #334155; border-radius: 8px; font-size: 12px; font-weight: bold;
-      cursor: pointer; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 6px;
+      cursor: pointer; margin-top: 8px; display: flex; justify-content: center; align-items: center; gap: 6px;
     }
     .secondary-btn {
       width: 100%; padding: 10px; background: #e2e8f0; color: #1e293b;
@@ -405,9 +440,6 @@
       width: 46px; height: 46px; border-radius: 50%; background: #222e42; color: #fff;
       display: flex; justify-content: center; align-items: center; font-size: 20px; flex-shrink: 0;
     }
-    .line-room-icon.joinable {
-      background: #06c755;
-    }
     .line-room-main { flex: 1; overflow: hidden; }
     .line-room-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
     .line-room-title { font-size: 14px; font-weight: bold; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -418,14 +450,6 @@
       background: #06c755; color: #fff; font-size: 10px; font-weight: bold;
       min-width: 18px; height: 18px; border-radius: 9px; padding: 0 5px;
       display: flex; justify-content: center; align-items: center; flex-shrink: 0; margin-left: 6px;
-    }
-    .join-room-pill {
-      background: #06c755; color: #fff; font-size: 11px; font-weight: bold;
-      padding: 4px 10px; border-radius: 12px; flex-shrink: 0; margin-left: 6px;
-    }
-    .room-section-label {
-      background: #f1f5f9; color: #475569; font-size: 11px; font-weight: bold;
-      padding: 6px 14px; border-bottom: 1px solid #e2e8f0;
     }
 
     .member-list-item {
@@ -449,7 +473,36 @@
 <body>
 
 <div class="app-container">
+  <!-- ホーム画面追加（アプリダウンロード）案内バナー -->
+  <div class="pwa-install-banner hidden" id="pwaInstallBanner">
+    <div style="line-height:1.35;">
+      <strong>📲 アプリとしてホーム画面に保存</strong><br>
+      <span style="opacity:0.92;">保存したアイコンから開くと通知が届きます</span>
+    </div>
+    <button type="button" id="pwaInstallActionBtn" class="pwa-install-btn">保存方法を見る</button>
+  </div>
+
   <div class="inapp-toast" id="inappToast"></div>
+
+  <!-- ホーム画面追加手順モーダル（iPhone Safari / Android案内） -->
+  <div class="modal-overlay hidden" id="pwaGuideModal" onclick="closePwaGuideModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div style="font-size:16px; font-weight:bold; color:#0f172a; margin-bottom:8px;">📲 アプリをホーム画面に保存する手順</div>
+      <div style="font-size:12px; color:#334155; line-height:1.65; background:#f8fafc; padding:11px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:10px;">
+        <strong>🍎 iPhoneの方（必ずSafariで開いてください）：</strong><br>
+        1. 画面下の <strong>共有ボタン（□から↑が出ているマーク）</strong> をタップ<br>
+        2. 下にスクロールして <strong>「ホーム画面に追加」</strong> をタップ<br>
+        3. 右上の <strong>「追加」</strong> をタップ<br><br>
+        <strong>🤖 Androidの方（Chrome）：</strong><br>
+        1. 右上の <strong>「︙」メニュー</strong> をタップ<br>
+        2. <strong>「ホーム画面に追加」＞「インストール」</strong> をタップ
+      </div>
+      <div style="font-size:11px; color:#047857; font-weight:bold; margin-bottom:8px;">
+        ※保存後、ホーム画面にできた「みやチャット」のアイコンから開いてパスコードを入力してください！
+      </div>
+      <button type="button" onclick="closePwaGuideModal()" class="primary-btn">わかった（閉じる）</button>
+    </div>
+  </div>
 
   <div class="img-lightbox hidden" id="imgLightbox" onclick="closeImageViewer()">
     <button class="lightbox-close" onclick="closeImageViewer()">× 閉じる</button>
@@ -516,11 +569,45 @@
     </div>
   </div>
 
-  <!-- 1. 初回入室・プロフィール設定＆管理人専用ログイン画面 -->
-  <div class="full-screen" id="joinScreen" style="justify-content:center; padding:16px 20px; text-align:center; overflow-y:auto;">
-    <div style="font-size: 18px; font-weight: bold; color: #0f172a; margin-bottom: 2px;">みやチャット参加設定</div>
-    <div style="font-size: 11px; color: #64748b; margin-bottom: 8px;" id="joinRoomNotice">
-      プロフィールと利用規約を確認して参加してください
+  <!-- パスコード入力で別グループ参加モーダル（部屋ごとに名前・アイコン変更可能） -->
+  <div class="modal-overlay hidden" id="joinByPasscodeModal" onclick="closeJoinByPasscodeModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div style="font-size:16px; font-weight:bold; color:#0f172a; margin-bottom:4px;">🔑 パスコードでグループに参加</div>
+      <div style="font-size:11px; color:#64748b; margin-bottom:10px;">
+        教えてもらったパスコードを入力してください。この部屋専用の名前やアイコンに変えて参加することもできます。
+      </div>
+
+      <label class="field-label">グループパスコード（必須）</label>
+      <input type="text" id="addRoomPasscodeInput" class="text-input passcode-input-box" placeholder="パスコードを入力" />
+
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px; margin-bottom:10px; text-align:center;">
+        <div style="font-size:11px; font-weight:bold; color:#0f172a; margin-bottom:6px;">このグループで使うプロフィール</div>
+        <input type="file" id="addRoomAvatarFileInput" accept="image/*" style="display:none;" />
+        <div class="avatar-upload-wrap" id="addRoomAvatarBtn" title="タップしてこの部屋用の画像に変更">
+          <div class="avatar-preview" id="addRoomAvatarPreview">🐱</div>
+          <div class="avatar-edit-badge">📷</div>
+        </div>
+        <div style="font-size:10px; color:#06c755; font-weight:bold; margin-bottom:6px;">↑ タップでこの部屋専用のアイコンに変更可</div>
+
+        <label class="field-label">この部屋で表示するニックネーム</label>
+        <input type="text" id="addRoomNicknameInput" class="text-input" placeholder="この部屋でのニックネーム" maxlength="15" style="margin-bottom:0;" />
+      </div>
+
+      <button type="button" id="submitJoinByPasscodeBtn" class="primary-btn">このグループに参加する</button>
+      <button type="button" onclick="closeJoinByPasscodeModal()" class="secondary-btn">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- 1. 初回入室・パスコード＆プロフィール設定画面 -->
+  <div class="full-screen" id="joinScreen" style="justify-content:flex-start; padding:14px 18px; text-align:center; overflow-y:auto;">
+    <div style="font-size: 18px; font-weight: bold; color: #0f172a; margin-bottom: 2px;">みやチャット 入室設定</div>
+    <div style="font-size: 11px; color: #64748b; margin-bottom: 8px;">
+      パスコード・ニックネーム・利用規約を入力して参加してください
+    </div>
+
+    <div style="width:100%; background:#f0fdf4; border:1.5px solid #06c755; border-radius:10px; padding:8px 10px; margin-bottom:8px;">
+      <label class="field-label" style="color:#047857; text-align:center;">🔑 グループパスコード（必須・空欄不可）</label>
+      <input type="text" id="joinPasscodeInput" class="text-input passcode-input-box" placeholder="パスコードを入力" style="margin-bottom:0;" />
     </div>
 
     <input type="file" id="avatarFileInput" accept="image/*" style="display: none;" />
@@ -528,11 +615,11 @@
       <div class="avatar-preview" id="avatarPreview">🐱</div>
       <div class="avatar-edit-badge">📷</div>
     </div>
-    <div style="font-size: 10px; color: #06c755; font-weight: bold; margin-bottom: 8px;">↑ タップして好きな画像に変更</div>
+    <div style="font-size: 10px; color: #06c755; font-weight: bold; margin-bottom: 6px;">↑ タップしてアイコン画像を変更</div>
 
     <input type="text" id="nicknameInput" class="text-input" placeholder="ニックネームを入力 (例: たなか)" maxlength="15" />
 
-    <div style="width:100%; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:9px 10px; margin-bottom:8px; text-align:left;">
+    <div style="width:100%; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:8px 10px; margin-bottom:8px; text-align:left;">
       <label style="display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:bold; cursor:pointer;">
         <span>𝕏 アカウントを記載・連携する</span>
         <input type="checkbox" id="xSyncToggle" style="width: 17px; height: 17px; accent-color: #000;" />
@@ -542,20 +629,20 @@
       </div>
     </div>
 
-    <div style="width:100%; text-align:left; margin-bottom:10px;">
-      <div style="font-size:11px; font-weight:bold; color:#0f172a; margin-bottom:4px;">📜 利用規約・ルール</div>
+    <div style="width:100%; text-align:left; margin-bottom:8px;">
+      <div style="font-size:11px; font-weight:bold; color:#0f172a; margin-bottom:3px;">📜 利用規約・ルール</div>
       <div class="terms-box" id="joinTermsText">【みやチャット 利用規約】
 1. 他のメンバーへの誹謗中傷、迷惑行為、荒らし行為は禁止します。
 2. 許可なくトーク内の画像・動画・個人情報を外部へ転載しないでください。
-3. 招待URLの無断拡散は禁止です。
+3. パスコード・招待情報の無断拡散は禁止です。
 4. 規約違反が確認された場合、管理人の判断によりグループから削除することがあります。</div>
-      <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:bold; color:#0f172a; cursor:pointer; background:#e8f9ef; padding:8px 10px; border-radius:8px; border:1px solid #a7f3d0;">
+      <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:bold; color:#0f172a; cursor:pointer; background:#e8f9ef; padding:7px 10px; border-radius:8px; border:1px solid #a7f3d0;">
         <input type="checkbox" id="agreeTermsCheckbox" style="width:18px; height:18px; accent-color:#06c755;" />
         <span>上記の利用規約に同意して参加します</span>
       </label>
     </div>
 
-    <button id="joinBtn" class="primary-btn" disabled>利用規約に同意してトークに参加</button>
+    <button id="joinBtn" class="primary-btn" disabled>パスコードと利用規約に同意して入室</button>
 
     <button type="button" id="joinScreenAdminLoginBtn" class="admin-login-entry-btn">
       🔐 管理人専用ログインはこちら
@@ -573,19 +660,24 @@
       </div>
     </div>
     <div style="flex:1; overflow-y:auto; background:#fff;" id="roomListEl"></div>
-    <div style="padding:12px; border-top:1px solid #e2e8f0; background:#f8fafc;">
-      <button id="openUserCreateGroupBtn" class="primary-btn" style="padding:11px; font-size:13px; background:#222e42;">＋ 新しいトークルームを作成</button>
+    <div style="padding:10px 12px; border-top:1px solid #e2e8f0; background:#f8fafc; display:flex; flex-direction:column; gap:7px;">
+      <button id="openJoinByPasscodeBtn" class="primary-btn" style="padding:11px; font-size:13px;">🔑 パスコードを入力して別グループに参加</button>
+      <button id="openUserCreateGroupBtn" class="secondary-btn" style="margin-top:0; padding:10px; font-size:12px; background:#222e42; color:#fff;">＋ 新しいトークルームを作成（管理人許可制）</button>
     </div>
   </div>
 
-  <!-- 3. 自分のプロフィール編集画面 -->
+  <!-- 3. プロフィール編集画面（部屋ごとの名前・アイコン対応） -->
   <div class="full-screen hidden" id="myProfileEditScreen">
     <div class="screen-header">
-      <span>👤 プロフィール設定</span>
+      <span id="profileEditScreenTitle">👤 プロフィール設定</span>
       <button id="closeMyProfileEditBtn" style="background:rgba(255,255,255,0.2); border:none; color:#fff; padding:5px 10px; border-radius:6px; font-size:12px; cursor:pointer;">戻る</button>
     </div>
     <div class="screen-body" style="text-align:center;">
       <div class="card">
+        <div id="profileEditScopeBadge" style="font-size:11px; font-weight:bold; color:#047857; background:#e8f9ef; padding:6px 10px; border-radius:8px; margin-bottom:12px;">
+          基本プロフィールの編集
+        </div>
+
         <input type="file" id="editAvatarFileInput" accept="image/*" style="display: none;" />
         <div class="avatar-upload-wrap" id="editAvatarUploadBtn" title="タップして画像を変更">
           <div class="avatar-preview" id="editAvatarPreview">🐱</div>
@@ -593,7 +685,7 @@
         </div>
         <div style="font-size: 11px; color: #06c755; font-weight: bold; margin-bottom: 14px;">↑ タップしてアイコン画像を変更</div>
 
-        <label class="field-label">ニックネーム</label>
+        <label class="field-label" id="editNicknameFieldLabel">ニックネーム</label>
         <input type="text" id="editNicknameInput" class="text-input" placeholder="ニックネームを入力" maxlength="15" />
 
         <div style="width:100%; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px; margin-top:6px; margin-bottom:14px; text-align:left;">
@@ -711,32 +803,45 @@
     </div>
     <div class="screen-body">
       <div class="card">
-        <div class="card-title">🔗 現在のグループ設定＆専用招待URL</div>
+        <div class="card-title">🔑 現在のグループパスコード＆設定</div>
         <div style="font-size:12px; color:#64748b; margin-bottom:8px;">
           対象グループ：<strong id="adminTargetRoomName">雑談メインルーム</strong>
         </div>
+
+        <label class="field-label">このグループの参加パスコード（必須・メンバーに共有）</label>
+        <div style="display:flex; gap:6px; margin-bottom:8px;">
+          <input type="text" id="adminRoomPasscodeInput" class="text-input" placeholder="例: 1234, miya01" style="margin-bottom:0; font-weight:bold;" />
+          <button id="adminSavePasscodeBtn" class="primary-btn" style="width:auto; padding:0 12px; white-space:nowrap;">変更保存</button>
+        </div>
+
+        <label class="field-label">メンバー案内用テキスト（アプリURL＋パスコード）</label>
         <div style="display:flex; gap:6px; margin-bottom:8px;">
           <input type="text" id="adminRoomInviteUrl" class="text-input" readonly style="margin-bottom:0; font-size:11px; background:#f8fafc;" />
-          <button id="adminCopyUrlBtn" class="primary-btn" style="width:auto; padding:0 12px; white-space:nowrap;">コピー</button>
+          <button id="adminCopyUrlBtn" class="primary-btn" style="width:auto; padding:0 12px; white-space:nowrap; background:#0284c7;">案内コピー</button>
         </div>
+
         <button id="adminToggleNameVisBtn" class="secondary-btn" style="margin-top:0; margin-bottom:6px; background:#e0f2fe; color:#0369a1;">👁️ グループ名の表示/非表示を切り替え</button>
-        <button id="adminLockToggleBtn" class="secondary-btn" style="margin-top:0;">🔒 鍵をかける（現在のメンバー以外入室不可）</button>
+        <button id="adminLockToggleBtn" class="secondary-btn" style="margin-top:0;">🔒 鍵をかける（新規入室を停止）</button>
       </div>
 
       <div class="card">
-        <div class="card-title">➕ 新しいグループ作成＆専用URL発行</div>
+        <div class="card-title">➕ 新しいグループ作成＆パスコード発行</div>
+        <label class="field-label">新しいグループ名</label>
         <input type="text" id="adminNewGroupName" class="text-input" placeholder="新しいグループ名を入力" maxlength="20" />
+        <label class="field-label">参加用パスコード（必須・空欄不可）</label>
+        <input type="text" id="adminNewGroupPasscode" class="text-input" placeholder="例: 7777 や teamA" maxlength="20" />
+
         <label style="display:flex; align-items:center; justify-content:space-between; font-size:12px; font-weight:bold; background:#f8fafc; padding:8px 10px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:8px; cursor:pointer;">
           <span>グループ名を表示する（OFFで非表示設定）</span>
           <input type="checkbox" id="adminNewGroupShowName" checked style="width:17px; height:17px; accent-color:#06c755;" />
         </label>
         <div style="font-size:12px; font-weight:bold; margin-bottom:4px;">初期参加メンバーを選択：</div>
         <div id="adminMemberCheckList" style="border:1px solid #e2e8f0; border-radius:8px; max-height:130px; overflow-y:auto; margin-bottom:10px; background:#fff;"></div>
-        <button id="adminCreateGroupBtn" class="primary-btn">グループを作成してURL発行</button>
+        <button id="adminCreateGroupBtn" class="primary-btn">グループを作成してパスコード発行</button>
         <div id="adminCreatedUrlBox" style="display:none; margin-top:10px; background:#e8f9ef; border:1px solid #06c755; padding:10px; border-radius:8px;">
-          <div style="font-size:11px; font-weight:bold; color:#047857; margin-bottom:4px;">✅ グループを作成しました！専用招待URL：</div>
+          <div style="font-size:11px; font-weight:bold; color:#047857; margin-bottom:4px;">✅ グループを作成しました！案内情報：</div>
           <input type="text" id="adminCreatedUrlInput" class="text-input" readonly style="font-size:11px; margin-bottom:6px;" />
-          <button id="adminCopyCreatedUrlBtn" class="primary-btn" style="padding:8px; font-size:12px;">この招待URLをコピーする</button>
+          <button id="adminCopyCreatedUrlBtn" class="primary-btn" style="padding:8px; font-size:12px;">URLとパスコードをコピーする</button>
         </div>
       </div>
 
@@ -752,7 +857,7 @@
       </div>
 
       <div class="card">
-        <div class="card-title">🔑 パスワード変更＆メール設定</div>
+        <div class="card-title">🔑 管理画面パスワード変更＆メール設定</div>
         <label class="field-label">通知先メールアドレス</label>
         <input type="email" id="adminEmailInput" class="text-input" placeholder="メールアドレス" />
         <label class="field-label">新しい管理画面パスワード</label>
@@ -790,16 +895,19 @@
       <div class="card hidden" id="userGroupFormBox">
         <div class="card-title">グループ名</div>
         <input type="text" id="userNewGroupName" class="text-input" placeholder="例: ゲーム攻略班、週末ランチ会" maxlength="20" />
+        <div class="card-title">参加用パスコード（必須）</div>
+        <input type="text" id="userNewGroupPasscode" class="text-input" placeholder="例: 5678（メンバーに教える合言葉）" maxlength="20" />
+
         <label style="display:flex; align-items:center; justify-content:space-between; font-size:12px; font-weight:bold; background:#f8fafc; padding:8px 10px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:10px; cursor:pointer;">
           <span>グループ名を表示する（OFFで非表示）</span>
           <input type="checkbox" id="userNewGroupShowName" checked style="width:17px; height:17px; accent-color:#06c755;" />
         </label>
         <div class="card-title">追加するメンバーを選択</div>
         <div style="font-size:11px; color:#64748b; margin-bottom:8px;">
-          チェックを入れたメンバーだけがこのグループに参加できます。
+          チェックを入れたメンバーはパスコード入力なしで最初から参加できます。
         </div>
-        <div id="userMemberCheckList" style="border:1px solid #e2e8f0; border-radius:8px; max-height:220px; overflow-y:auto; margin-bottom:12px; background:#fff;"></div>
-        <button id="userCreateGroupSubmitBtn" class="primary-btn">このメンバーでグループを作成</button>
+        <div id="userMemberCheckList" style="border:1px solid #e2e8f0; border-radius:8px; max-height:200px; overflow-y:auto; margin-bottom:12px; background:#fff;"></div>
+        <button id="userCreateGroupSubmitBtn" class="primary-btn">この内容でグループを作成</button>
       </div>
     </div>
   </div>
@@ -828,7 +936,7 @@
       <div style="font-size: 12px; color: #64748b; margin-top: 2px;" id="profileModalRole">メンバー</div>
       <button id="mentionUserFromModalBtn" class="primary-btn" style="margin-top:10px; background:#0284c7; padding:10px; font-size:13px;">＠ この人にメンションする</button>
       <div id="profileModalXArea" style="width: 100%; margin-top: 10px;"></div>
-      <button id="openMyProfileEditFromModalBtn" class="secondary-btn" style="display:none; background:#06c755; color:#fff;">✏️ プロフィール（名前・アイコン・𝕏）を編集</button>
+      <button id="openMyProfileEditFromModalBtn" class="secondary-btn" style="display:none; background:#06c755; color:#fff;">✏️ この部屋でのプロフィール（名前・アイコン）を編集</button>
       <button id="closeProfileModalBtn" class="secondary-btn">閉じる</button>
     </div>
   </div>
@@ -844,8 +952,8 @@
     </div>
     <div class="header-right">
       <button id="notifyToggleBtn" class="icon-btn notify-off">🔔 通知</button>
-      <button id="openMyProfileBtn" class="icon-btn">👤</button>
-      <button id="quickInviteBtn" class="icon-btn invite-btn">🔗</button>
+      <button id="openMyProfileBtn" class="icon-btn" title="この部屋での名前・アイコン変更">👤</button>
+      <button id="quickInviteBtn" class="icon-btn invite-btn" title="URLとパスコードをコピー">🔑</button>
       <button id="openAdminScreenBtn" class="icon-btn admin-btn" style="display:none;">⚙️</button>
     </div>
   </div>
@@ -1009,6 +1117,40 @@
     console.error('Firebase init error:', e);
   }
 
+  // =========================================================
+  // PWA（ホーム画面追加・アプリダウンロード）案内バナー制御
+  // =========================================================
+  let deferredInstallPrompt = null;
+  const isStandaloneApp = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+  if (!isStandaloneApp) {
+    document.getElementById('pwaInstallBanner').classList.remove('hidden');
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    const btn = document.getElementById('pwaInstallActionBtn');
+    if (btn) btn.textContent = '📲 アプリを保存';
+  });
+
+  document.getElementById('pwaInstallActionBtn').addEventListener('click', async () => {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const choice = await deferredInstallPrompt.userChoice;
+      if (choice.outcome === 'accepted') {
+        document.getElementById('pwaInstallBanner').classList.add('hidden');
+      }
+      deferredInstallPrompt = null;
+    } else {
+      document.getElementById('pwaGuideModal').classList.remove('hidden');
+    }
+  });
+
+  window.closePwaGuideModal = () => {
+    document.getElementById('pwaGuideModal').classList.add('hidden');
+  };
+
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').then((reg) => {
       swRegistration = reg;
@@ -1153,7 +1295,7 @@
   const DEFAULT_TERMS = `【みやチャット 利用規約】
 1. 他のメンバーへの誹謗中傷、迷惑行為、荒らし行為は禁止します。
 2. 許可なくトーク内の画像・動画・個人情報を外部へ転載しないでください。
-3. 招待URLの無断拡散は禁止です。
+3. パスコード・招待情報の無断拡散は禁止です。
 4. 規約違反が確認された場合、管理人の判断によりグループから削除することがあります。`;
 
   function getDefaultSharedState() {
@@ -1166,6 +1308,7 @@
         {
           id: 'room_main',
           name: '雑談メインルーム',
+          passcode: '0000',
           showName: true,
           isLocked: false,
           members: [],
@@ -1185,12 +1328,11 @@
   let isNotifyEnabled = localStorage.getItem(LOCAL_NOTIFY_KEY) !== 'false';
   let currentRoomId = null;
 
-  // トーク一覧画面を開いている間は勝手に既読をつけないためのフラグ
   let isViewingRoomList = true;
   let isInitialLoadDone = false;
   let lastNotifiedSignature = '';
 
-  function normalizeRoomArrays(r) {
+  function normalizeRoomArrays(r, index = 0) {
     if (!r.members) r.members = [];
     const seenIds = new Set();
     r.members = r.members.filter(m => {
@@ -1198,6 +1340,10 @@
       seenIds.add(m.id);
       return true;
     });
+    // パスコード未設定の既存ルームに自動で初期パスコードを割り当て
+    if (!r.passcode || String(r.passcode).trim() === '') {
+      r.passcode = (r.id === 'room_main' || index === 0) ? '0000' : String(1000 + index);
+    }
     if (!r.messages) r.messages = [];
     if (!r.notes) r.notes = [];
     if (!r.events) r.events = [];
@@ -1220,7 +1366,24 @@
     }
   }
 
-  // トークルームを実際に開いているときだけ既読を記録・更新する
+  // 部屋ごとの自分のプロフィール（名前・アイコン・𝕏）を取得（未設定なら基本プロフィールを返す）
+  function getMyProfileForRoom(room) {
+    if (!currentUser) return null;
+    if (room && Array.isArray(room.members)) {
+      const m = room.members.find(x => x.id === currentUser.id);
+      if (m) {
+        return {
+          id: currentUser.id,
+          name: m.name || currentUser.name,
+          avatar: m.avatar || currentUser.avatar,
+          isImg: Boolean(m.isImg),
+          xHandle: m.xHandle !== undefined ? m.xHandle : (currentUser.xHandle || '')
+        };
+      }
+    }
+    return currentUser;
+  }
+
   function markRoomAsRead(room) {
     if (!room || !currentUser || isViewingRoomList) return;
     const msgs = room.messages || [];
@@ -1250,17 +1413,6 @@
     const isGlobalAdmin = currentUser.id === sharedState.creatorId;
     if (isGlobalAdmin) return sharedState.rooms;
     return sharedState.rooms.filter(r => (r.members || []).some(m => m.id === currentUser.id));
-  }
-
-  // 参加していないが、鍵がかかっていない公開ルーム一覧
-  function getJoinablePublicRooms() {
-    if (!currentUser) return [];
-    const isGlobalAdmin = currentUser.id === sharedState.creatorId;
-    if (isGlobalAdmin) return [];
-    return sharedState.rooms.filter(r => {
-      const isJoined = (r.members || []).some(m => m.id === currentUser.id);
-      return !isJoined && !r.isLocked;
-    });
   }
 
   function updateTotalUnreadBadge() {
@@ -1480,6 +1632,7 @@
     newState.rooms.forEach(r => {
       const isMember = (currentUser.id === newState.creatorId) || (r.members || []).some(m => m.id === currentUser.id);
       if (!isMember) return;
+      const myProf = getMyProfileForRoom(r);
 
       const msgs = r.messages || [];
       if (msgs.length > 0) {
@@ -1487,7 +1640,7 @@
         if (lastM.type === 'msg' && lastM.senderId !== currentUser.id) {
           const sig = `msg_${r.id}_${msgs.length}_${lastM.time}_${lastM.text || lastM.stickerId || lastM.mediaType}`;
           latestSig = sig;
-          const isMentionedMe = lastM.text && (lastM.text.includes(`@${currentUser.name}`) || lastM.text.includes('@All'));
+          const isMentionedMe = lastM.text && (lastM.text.includes(`@${myProf.name}`) || lastM.text.includes('@All'));
           notifyTitle = isMentionedMe
             ? `📣 ${lastM.senderName} があなたにメンション！`
             : `💬 ${lastM.senderName}（${r.showName === false ? 'グループ' : r.name}）`;
@@ -1532,6 +1685,10 @@
   let selectedAvatarIsImg = false;
   let editingAvatar = '🐱';
   let editingAvatarIsImg = false;
+  let editingTargetRoomId = null; // nullなら基本プロフィール、roomIdならその部屋専用プロフィール編集
+
+  let addRoomAvatar = '🐱';
+  let addRoomAvatarIsImg = false;
 
   let calDate = new Date();
   let selectedDateFilter = null;
@@ -1547,7 +1704,6 @@
   let pendingReplyObj = null;
 
   const urlParams = new URLSearchParams(window.location.search);
-  const invitedRoomId = urlParams.get('room');
   const isAdminDirectUrl = urlParams.get('admin') === '1';
 
   function escapeHtml(str) {
@@ -1628,7 +1784,8 @@
     const role = getMyRoleInRoom(room);
     if (role === 'admin' || role === 'co-admin') return true;
     if (authorId && authorId === currentUser.id) return true;
-    if (!authorId && authorName && authorName === currentUser.name) return true;
+    const myProf = getMyProfileForRoom(room);
+    if (!authorId && authorName && myProf && authorName === myProf.name) return true;
     return false;
   }
 
@@ -1649,9 +1806,10 @@
     return Array.from(map.values());
   }
 
-  function buildRoomInviteUrl(roomId) {
-    const base = location.href.split('?')[0];
-    return `${base}?room=${encodeURIComponent(roomId)}`;
+  function buildPasscodeShareText(room) {
+    const appUrl = location.href.split('?')[0];
+    const rName = room.showName === false ? '限定グループ' : room.name;
+    return `【みやチャット】「${rName}」の参加案内\n① アプリURL（ホーム画面に保存して開いてください）:\n${appUrl}\n② グループパスコード: ${room.passcode}`;
   }
 
   function buildAdminMailtoHref() {
@@ -1805,15 +1963,16 @@
 
   function sendStickerMessage(stickerId) {
     const room = getCurrentRoom();
+    const myProf = getMyProfileForRoom(room);
     const isMemberOfRoom = (room.members || []).some(m => m.id === currentUser.id);
     const msgObj = {
       type: 'msg',
       senderId: currentUser.id,
-      senderName: currentUser.name,
-      avatar: currentUser.avatar,
-      isImg: currentUser.isImg,
+      senderName: myProf.name,
+      avatar: myProf.avatar,
+      isImg: myProf.isImg,
       role: getMyRoleInRoom(room),
-      xHandle: currentUser.xHandle || '',
+      xHandle: myProf.xHandle || '',
       stickerId: stickerId,
       readBy: isMemberOfRoom ? [currentUser.id] : [],
       time: getTime()
@@ -1996,9 +2155,10 @@
     if (!m) return;
     if (!confirm('このメッセージの送信を取り消しますか？（全員の画面から消去されます）')) return;
 
+    const myProf = getMyProfileForRoom(room);
     const isMine = m.senderId === currentUser.id;
     const noticeText = isMine
-      ? `${currentUser.name} がメッセージの送信を取り消しました`
+      ? `${myProf.name} がメッセージの送信を取り消しました`
       : `管理人が ${m.senderName} のメッセージを削除しました`;
 
     room.messages[index] = { type: 'system', text: noticeText };
@@ -2120,12 +2280,28 @@
     updateMentionSuggestions();
   });
 
+  // =========================================================
+  // 初回入室（パスコード必須・空欄不可）
+  // =========================================================
   const agreeTermsCheckbox = document.getElementById('agreeTermsCheckbox');
+  const joinPasscodeInput = document.getElementById('joinPasscodeInput');
   const joinBtn = document.getElementById('joinBtn');
-  agreeTermsCheckbox.addEventListener('change', () => {
-    joinBtn.disabled = !agreeTermsCheckbox.checked;
-    joinBtn.textContent = agreeTermsCheckbox.checked ? 'トークに参加する' : '利用規約に同意してトークに参加';
-  });
+
+  function updateJoinButtonState() {
+    const hasPass = joinPasscodeInput.value.trim().length > 0;
+    const agreed = agreeTermsCheckbox.checked;
+    joinBtn.disabled = !(hasPass && agreed);
+    if (!hasPass) {
+      joinBtn.textContent = 'パスコードを入力してください';
+    } else if (!agreed) {
+      joinBtn.textContent = '利用規約に同意して入室';
+    } else {
+      joinBtn.textContent = 'パスコードでトークに入室する';
+    }
+  }
+
+  agreeTermsCheckbox.addEventListener('change', updateJoinButtonState);
+  joinPasscodeInput.addEventListener('input', updateJoinButtonState);
 
   const xSyncToggle = document.getElementById('xSyncToggle');
   const xInputWrap = document.getElementById('xInputWrap');
@@ -2149,9 +2325,28 @@
   });
 
   joinBtn.addEventListener('click', async () => {
+    const inputCode = joinPasscodeInput.value.trim();
+    if (!inputCode) return alert('グループパスコードを入力してください（空欄ではログインできません）');
     if (!agreeTermsCheckbox.checked) return alert('利用規約に同意してください');
+
     const name = document.getElementById('nicknameInput').value.trim();
     if (!name) return alert('ニックネームを入力してください');
+
+    // 入力されたパスコードに一致するグループを検索
+    const targetRoom = sharedState.rooms.find(r => String(r.passcode || '').trim() === inputCode);
+    if (!targetRoom) {
+      alert('パスコードが一致するグループが見つかりません。\n正しいパスコードを確認してください。');
+      return;
+    }
+
+    normalizeRoomArrays(targetRoom);
+    const isFirstCreator = !sharedState.creatorId;
+    const existingMember = targetRoom.members.find(m => m.name === name);
+
+    if (targetRoom.isLocked && !isFirstCreator && !existingMember) {
+      alert('このグループは現在新規入室が停止（ロック）されています。');
+      return;
+    }
 
     let xHandle = '';
     if (xSyncToggle.checked) {
@@ -2170,15 +2365,6 @@
       } catch (e) {}
     }
 
-    const targetRoom = (invitedRoomId && sharedState.rooms.find(r => r.id === invitedRoomId)) || sharedState.rooms[0];
-    const isFirstCreator = !sharedState.creatorId;
-
-    let existingMember = null;
-    if (targetRoom) {
-      normalizeRoomArrays(targetRoom);
-      existingMember = targetRoom.members.find(m => m.name === name);
-    }
-
     const userId = existingMember ? existingMember.id : ('u_' + Date.now() + '_' + Math.floor(Math.random() * 1000));
     if (isFirstCreator) sharedState.creatorId = userId;
 
@@ -2192,23 +2378,17 @@
     };
     saveLocalUser();
 
-    if (targetRoom) {
-      if (targetRoom.isLocked && !isFirstCreator && !existingMember) {
-        alert('このグループは現在鍵がかかっているため入室できません。');
-        return;
-      }
-      currentRoomId = targetRoom.id;
-      if (existingMember) {
-        existingMember.avatar = currentUser.avatar;
-        existingMember.isImg = currentUser.isImg;
-        existingMember.xHandle = currentUser.xHandle;
-      } else {
-        targetRoom.members.push({
-          ...currentUser,
-          role: isFirstCreator ? 'admin' : 'member'
-        });
-        targetRoom.messages.push({ type: 'divider', text: `ここから ${name} が参加（過去の履歴も閲覧可能）` });
-      }
+    currentRoomId = targetRoom.id;
+    if (existingMember) {
+      existingMember.avatar = currentUser.avatar;
+      existingMember.isImg = currentUser.isImg;
+      existingMember.xHandle = currentUser.xHandle;
+    } else {
+      targetRoom.members.push({
+        ...currentUser,
+        role: isFirstCreator ? 'admin' : 'member'
+      });
+      targetRoom.messages.push({ type: 'divider', text: `ここから ${name} が参加（過去の履歴も閲覧可能）` });
     }
 
     saveShared(true);
@@ -2216,42 +2396,142 @@
     updateNotifyBtnUI();
     document.getElementById('joinScreen').classList.add('hidden');
 
-    if (invitedRoomId) {
-      isViewingRoomList = false;
-      renderAll();
-    } else {
-      openRoomListScreen();
-    }
+    // 入室したグループを直接開く
+    isViewingRoomList = false;
+    renderAll();
 
     if (isAdminDirectUrl) openAdminAuthModal();
   });
 
+  // =========================================================
+  // トーク一覧画面からの「パスコード入力で別グループ追加参加」
+  // （部屋ごとに名前・アイコン変更可能）
+  // =========================================================
+  document.getElementById('openJoinByPasscodeBtn').addEventListener('click', () => {
+    document.getElementById('addRoomPasscodeInput').value = '';
+    addRoomAvatar = currentUser.avatar;
+    addRoomAvatarIsImg = currentUser.isImg;
+    document.getElementById('addRoomAvatarPreview').innerHTML = addRoomAvatarIsImg ? `<img src="${addRoomAvatar}" />` : addRoomAvatar;
+    document.getElementById('addRoomNicknameInput').value = currentUser.name;
+    document.getElementById('joinByPasscodeModal').classList.remove('hidden');
+  });
+
+  window.closeJoinByPasscodeModal = () => {
+    document.getElementById('joinByPasscodeModal').classList.add('hidden');
+  };
+
+  document.getElementById('addRoomAvatarBtn').addEventListener('click', () => {
+    document.getElementById('addRoomAvatarFileInput').click();
+  });
+  document.getElementById('addRoomAvatarFileInput').addEventListener('change', (e) => {
+    processAvatarImage(e.target.files[0], (dataUrl) => {
+      addRoomAvatar = dataUrl;
+      addRoomAvatarIsImg = true;
+      document.getElementById('addRoomAvatarPreview').innerHTML = `<img src="${addRoomAvatar}" />`;
+    });
+  });
+
+  document.getElementById('submitJoinByPasscodeBtn').addEventListener('click', () => {
+    const code = document.getElementById('addRoomPasscodeInput').value.trim();
+    if (!code) return alert('パスコードを入力してください');
+
+    const roomNick = document.getElementById('addRoomNicknameInput').value.trim();
+    if (!roomNick) return alert('この部屋で使うニックネームを入力してください');
+
+    const targetRoom = sharedState.rooms.find(r => String(r.passcode || '').trim() === code);
+    if (!targetRoom) {
+      return alert('パスコードが一致するグループが見つかりません。');
+    }
+
+    normalizeRoomArrays(targetRoom);
+    const alreadyMember = targetRoom.members.find(m => m.id === currentUser.id);
+    if (alreadyMember) {
+      alreadyMember.name = roomNick;
+      alreadyMember.avatar = addRoomAvatar;
+      alreadyMember.isImg = addRoomAvatarIsImg;
+      currentRoomId = targetRoom.id;
+      isViewingRoomList = false;
+      markRoomAsRead(targetRoom);
+      saveShared(true);
+      closeJoinByPasscodeModal();
+      document.getElementById('roomListScreen').classList.add('hidden');
+      renderAll();
+      return;
+    }
+
+    if (targetRoom.isLocked && currentUser.id !== sharedState.creatorId) {
+      return alert('このグループは現在新規入室が停止（ロック）されています。');
+    }
+
+    targetRoom.members.push({
+      id: currentUser.id,
+      name: roomNick,
+      avatar: addRoomAvatar,
+      isImg: addRoomAvatarIsImg,
+      xHandle: currentUser.xHandle || '',
+      role: 'member',
+      fcmToken: registeredFcmToken || ''
+    });
+    targetRoom.messages.push({ type: 'divider', text: `ここから ${roomNick} が参加` });
+
+    currentRoomId = targetRoom.id;
+    isViewingRoomList = false;
+    markRoomAsRead(targetRoom);
+    saveShared(true);
+    closeJoinByPasscodeModal();
+    document.getElementById('roomListScreen').classList.add('hidden');
+    renderAll();
+  });
+
+  // =========================================================
+  // プロフィール編集（部屋ごとの名前・アイコン変更対応）
+  // =========================================================
   const editProfileXToggle = document.getElementById('editProfileXToggle');
   const editProfileXInputWrap = document.getElementById('editProfileXInputWrap');
   editProfileXToggle.addEventListener('change', () => {
     editProfileXInputWrap.style.display = editProfileXToggle.checked ? 'block' : 'none';
   });
 
-  function openMyProfileEditScreen() {
-    const u = currentUser;
-    editingAvatar = u.avatar;
-    editingAvatarIsImg = u.isImg;
-    document.getElementById('editAvatarPreview').innerHTML = u.isImg ? `<img src="${u.avatar}" />` : u.avatar;
-    document.getElementById('editNicknameInput').value = u.name;
+  function openMyProfileEditScreen(targetRoomId = null) {
+    editingTargetRoomId = targetRoomId;
+    const targetRoom = targetRoomId ? sharedState.rooms.find(r => r.id === targetRoomId) : null;
+    const prof = targetRoom ? getMyProfileForRoom(targetRoom) : currentUser;
 
-    const hasX = Boolean(u.xHandle);
+    if (targetRoom) {
+      const isGlobalAdmin = currentUser.id === sharedState.creatorId;
+      document.getElementById('profileEditScreenTitle').textContent = '👤 この部屋でのプロフィール';
+      document.getElementById('profileEditScopeBadge').textContent = `💬 「${getDisplayRoomName(targetRoom, isGlobalAdmin)}」専用の名前・アイコンを変更します`;
+      document.getElementById('editNicknameFieldLabel').textContent = 'この部屋でのニックネーム';
+    } else {
+      document.getElementById('profileEditScreenTitle').textContent = '👤 基本プロフィール設定';
+      document.getElementById('profileEditScopeBadge').textContent = '🌐 新しく入る部屋で使われる基本プロフィールを変更します';
+      document.getElementById('editNicknameFieldLabel').textContent = '基本ニックネーム';
+    }
+
+    editingAvatar = prof.avatar;
+    editingAvatarIsImg = prof.isImg;
+    document.getElementById('editAvatarPreview').innerHTML = prof.isImg ? `<img src="${prof.avatar}" />` : prof.avatar;
+    document.getElementById('editNicknameInput').value = prof.name;
+
+    const hasX = Boolean(prof.xHandle);
     editProfileXToggle.checked = hasX;
     editProfileXInputWrap.style.display = hasX ? 'block' : 'none';
-    document.getElementById('editProfileXHandleInput').value = u.xHandle || '';
+    document.getElementById('editProfileXHandleInput').value = prof.xHandle || '';
 
     document.getElementById('myProfileEditScreen').classList.remove('hidden');
   }
 
-  document.getElementById('openMyProfileBtn').addEventListener('click', openMyProfileEditScreen);
-  document.getElementById('roomListProfileBtn').addEventListener('click', openMyProfileEditScreen);
+  // トークルーム内右上の👤ボタン → その部屋専用のプロフィール編集を開く
+  document.getElementById('openMyProfileBtn').addEventListener('click', () => {
+    openMyProfileEditScreen(currentRoomId);
+  });
+  // トーク一覧画面右上の👤ボタン → 基本プロフィール編集を開く
+  document.getElementById('roomListProfileBtn').addEventListener('click', () => {
+    openMyProfileEditScreen(null);
+  });
   document.getElementById('openMyProfileEditFromModalBtn').addEventListener('click', () => {
     document.getElementById('userProfileModal').classList.add('hidden');
-    openMyProfileEditScreen();
+    openMyProfileEditScreen(currentRoomId);
   });
   document.getElementById('closeMyProfileEditBtn').addEventListener('click', () => {
     document.getElementById('myProfileEditScreen').classList.add('hidden');
@@ -2279,42 +2559,47 @@
       newX = formatXDisplay(rawX);
     }
 
-    const oldName = currentUser.name;
     const myId = currentUser.id;
 
-    currentUser.name = newName;
-    currentUser.avatar = editingAvatar;
-    currentUser.isImg = editingAvatarIsImg;
-    currentUser.xHandle = newX;
-    saveLocalUser();
-
-    sharedState.rooms.forEach(r => {
-      normalizeRoomArrays(r);
-      const m = r.members.find(x => x.id === myId);
-      if (m) {
-        m.name = newName;
-        m.avatar = editingAvatar;
-        m.isImg = editingAvatarIsImg;
-        m.xHandle = newX;
-      }
-      r.messages.forEach(msg => {
-        if (msg.senderId === myId) {
-          msg.senderName = newName;
-          msg.avatar = editingAvatar;
-          msg.isImg = editingAvatarIsImg;
-          msg.xHandle = newX;
+    if (editingTargetRoomId) {
+      // 指定された1つの部屋だけの名前・アイコンを更新（他の部屋の名前はそのまま維持）
+      const r = sharedState.rooms.find(x => x.id === editingTargetRoomId);
+      if (r) {
+        normalizeRoomArrays(r);
+        const m = r.members.find(x => x.id === myId);
+        const oldName = m ? m.name : currentUser.name;
+        if (m) {
+          m.name = newName;
+          m.avatar = editingAvatar;
+          m.isImg = editingAvatarIsImg;
+          m.xHandle = newX;
         }
-      });
-      if (oldName !== newName) {
-        r.notes.forEach(n => { if (n.author === oldName) n.author = newName; });
-        r.events.forEach(ev => {
-          if (ev.author === oldName) ev.author = newName;
-          ev.going = ev.going.map(x => x === oldName ? newName : x);
-          ev.maybe = ev.maybe.map(x => x === oldName ? newName : x);
-          ev.notGoing = ev.notGoing.map(x => x === oldName ? newName : x);
+        r.messages.forEach(msg => {
+          if (msg.senderId === myId) {
+            msg.senderName = newName;
+            msg.avatar = editingAvatar;
+            msg.isImg = editingAvatarIsImg;
+            msg.xHandle = newX;
+          }
         });
+        if (oldName !== newName) {
+          r.notes.forEach(n => { if (n.author === oldName) n.author = newName; });
+          r.events.forEach(ev => {
+            if (ev.author === oldName) ev.author = newName;
+            ev.going = ev.going.map(x => x === oldName ? newName : x);
+            ev.maybe = ev.maybe.map(x => x === oldName ? newName : x);
+            ev.notGoing = ev.notGoing.map(x => x === oldName ? newName : x);
+          });
+        }
       }
-    });
+    } else {
+      // 基本プロフィールの更新
+      currentUser.name = newName;
+      currentUser.avatar = editingAvatar;
+      currentUser.isImg = editingAvatarIsImg;
+      currentUser.xHandle = newX;
+      saveLocalUser();
+    }
 
     saveShared();
     syncUserFcmToken(false);
@@ -2324,6 +2609,9 @@
     alert('プロフィールを更新しました！');
   });
 
+  // =========================================================
+  // 管理人認証＆管理画面（パスコード設定・変更機能付き）
+  // =========================================================
   function openAdminAuthModal() {
     document.getElementById('adminPasswordInput').value = '';
     document.getElementById('sendAdminMailLink').href = buildAdminMailtoHref();
@@ -2381,13 +2669,14 @@
     const room = getCurrentRoom();
     normalizeRoomArrays(room);
     document.getElementById('adminTargetRoomName').textContent = getDisplayRoomName(room, true);
-    document.getElementById('adminRoomInviteUrl').value = buildRoomInviteUrl(room.id);
+    document.getElementById('adminRoomPasscodeInput').value = room.passcode || '';
+    document.getElementById('adminRoomInviteUrl').value = buildPasscodeShareText(room);
     document.getElementById('adminToggleNameVisBtn').textContent = room.showName === false
       ? '👁️ グループ名を「表示」に切り替える'
       : '🙈 グループ名を「非表示」に切り替える';
     document.getElementById('adminLockToggleBtn').textContent = room.isLocked
-      ? '🔓 鍵を解除する（新規入室を許可）'
-      : '🔒 鍵をかける（現在のメンバー以外入室不可）';
+      ? '🔓 新規入室ロックを解除する'
+      : '🔒 鍵をかける（新規入室を停止）';
 
     document.getElementById('adminTermsTextarea').value = sharedState.termsText || DEFAULT_TERMS;
     document.getElementById('adminEmailInput').value = sharedState.adminEmail;
@@ -2407,12 +2696,12 @@
       row.style.cursor = 'pointer';
       row.innerHTML = `
         <span>${escapeHtml(m.name)} ${getRoleBadge(m.role)}</span>
-        <input type="checkbox" class="admin-group-member-cb" value="${m.id}" checked style="width:17px; height:17px; accent-color:#06c755;" />
+        <input type="checkbox" class="admin-group-member-cb" value="${m.id}" style="width:17px; height:17px; accent-color:#06c755;" />
       `;
       checkList.appendChild(row);
     });
     if (!checkList.innerHTML) {
-      checkList.innerHTML = '<div style="padding:10px; font-size:11px; color:#94a3b8;">他のメンバーはまだいません（後からURLで招待できます）</div>';
+      checkList.innerHTML = '<div style="padding:10px; font-size:11px; color:#94a3b8;">他のメンバーはまだいません</div>';
     }
 
     const manageList = document.getElementById('adminManageMemberList');
@@ -2447,6 +2736,19 @@
     document.getElementById('adminCreatedUrlBox').style.display = 'none';
     document.getElementById('adminDashboardScreen').classList.remove('hidden');
   }
+
+  document.getElementById('adminSavePasscodeBtn').addEventListener('click', () => {
+    const newCode = document.getElementById('adminRoomPasscodeInput').value.trim();
+    if (!newCode) return alert('パスコードは空欄にできません。英数字を入力してください。');
+    const room = getCurrentRoom();
+    const dup = sharedState.rooms.find(r => r.id !== room.id && String(r.passcode || '').trim() === newCode);
+    if (dup) return alert(`パスコード「${newCode}」は既に別のグループで使われています。別のコードにしてください。`);
+
+    room.passcode = newCode;
+    saveShared(true);
+    document.getElementById('adminRoomInviteUrl').value = buildPasscodeShareText(room);
+    alert(`このグループのパスコードを「${newCode}」に更新しました！`);
+  });
 
   document.getElementById('saveAdminTermsBtn').addEventListener('click', () => {
     const text = document.getElementById('adminTermsTextarea').value.trim();
@@ -2487,10 +2789,10 @@
   });
 
   document.getElementById('adminCopyUrlBtn').addEventListener('click', () => {
-    const input = document.getElementById('adminRoomInviteUrl');
-    input.select();
-    navigator.clipboard?.writeText(input.value);
-    alert('このグループの専用招待URLをコピーしました！');
+    const room = getCurrentRoom();
+    const shareText = buildPasscodeShareText(room);
+    navigator.clipboard?.writeText(shareText);
+    alert(`案内メッセージとパスコードをコピーしました！\n\n${shareText}`);
   });
 
   document.getElementById('adminToggleNameVisBtn').addEventListener('click', () => {
@@ -2506,7 +2808,7 @@
     room.isLocked = !room.isLocked;
     room.messages.push({
       type: 'system',
-      text: room.isLocked ? '🔒 管理人がグループに鍵をかけました' : '🔓 管理人が鍵を解除しました'
+      text: room.isLocked ? '🔒 管理人が新規入室をロックしました' : '🔓 管理人が新規入室ロックを解除しました'
     });
     saveShared(true);
     openAdminDashboard();
@@ -2527,9 +2829,14 @@
 
   document.getElementById('adminCreateGroupBtn').addEventListener('click', () => {
     const name = document.getElementById('adminNewGroupName').value.trim();
+    const passcode = document.getElementById('adminNewGroupPasscode').value.trim();
     if (!name) return alert('グループ名を入力してください');
-    const showName = document.getElementById('adminNewGroupShowName').checked;
+    if (!passcode) return alert('参加用パスコードを入力してください（空欄不可）');
 
+    const dup = sharedState.rooms.find(r => String(r.passcode || '').trim() === passcode);
+    if (dup) return alert(`パスコード「${passcode}」は既に別のグループで使われています。別のコードにしてください。`);
+
+    const showName = document.getElementById('adminNewGroupShowName').checked;
     const newId = 'room_' + Date.now();
     const allMembers = getAllKnownMembers();
     const selectedIds = Array.from(document.querySelectorAll('.admin-group-member-cb:checked')).map(cb => cb.value);
@@ -2540,21 +2847,24 @@
       if (found && found.id !== currentUser.id) members.push({ ...found, role: 'member' });
     });
 
-    sharedState.rooms.push({
+    const newRoom = {
       id: newId,
       name: name,
+      passcode: passcode,
       showName: showName,
       isLocked: false,
       members: members,
       messages: [{ type: 'system', text: '新しいグループが作成されました！' }],
       notes: [],
       events: []
-    });
+    };
+    sharedState.rooms.push(newRoom);
 
     currentRoomId = newId;
     document.getElementById('adminNewGroupName').value = '';
-    const newUrl = buildRoomInviteUrl(newId);
-    document.getElementById('adminCreatedUrlInput').value = newUrl;
+    document.getElementById('adminNewGroupPasscode').value = '';
+    const shareText = buildPasscodeShareText(newRoom);
+    document.getElementById('adminCreatedUrlInput').value = shareText;
     document.getElementById('adminCreatedUrlBox').style.display = 'block';
     saveShared(true);
     if (isViewingRoomList) openRoomListScreen();
@@ -2565,7 +2875,7 @@
     const input = document.getElementById('adminCreatedUrlInput');
     input.select();
     navigator.clipboard?.writeText(input.value);
-    alert('作成したグループの専用招待URLをコピーしました！');
+    alert('アプリURLとパスコードをコピーしました！');
   });
 
   document.getElementById('openUserCreateGroupBtn').addEventListener('click', () => {
@@ -2605,9 +2915,14 @@
 
   document.getElementById('userCreateGroupSubmitBtn').addEventListener('click', () => {
     const name = document.getElementById('userNewGroupName').value.trim();
+    const passcode = document.getElementById('userNewGroupPasscode').value.trim();
     if (!name) return alert('グループ名を入力してください');
-    const showName = document.getElementById('userNewGroupShowName').checked;
+    if (!passcode) return alert('参加用パスコードを入力してください（空欄不可）');
 
+    const dup = sharedState.rooms.find(r => String(r.passcode || '').trim() === passcode);
+    if (dup) return alert(`パスコード「${passcode}」は既に別のグループで使われています。別のコードにしてください。`);
+
+    const showName = document.getElementById('userNewGroupShowName').checked;
     const newId = 'room_' + Date.now();
     const allMembers = getAllKnownMembers();
     const selectedIds = Array.from(document.querySelectorAll('.user-group-member-cb:checked')).map(cb => cb.value);
@@ -2621,10 +2936,11 @@
     sharedState.rooms.push({
       id: newId,
       name: name,
+      passcode: passcode,
       showName: showName,
       isLocked: false,
       members: members,
-      messages: [{ type: 'system', text: `${currentUser.name} がグループを作成しました（${members.length}人参加中）` }],
+      messages: [{ type: 'system', text: `${currentUser.name} がグループを作成しました（パスコード: ${passcode}）` }],
       notes: [],
       events: []
     });
@@ -2632,6 +2948,7 @@
     currentRoomId = newId;
     isViewingRoomList = false;
     document.getElementById('userNewGroupName').value = '';
+    document.getElementById('userNewGroupPasscode').value = '';
     saveShared(true);
     document.getElementById('createGroupScreen').classList.add('hidden');
     document.getElementById('roomListScreen').classList.add('hidden');
@@ -2639,7 +2956,7 @@
   });
 
   // =========================================================
-  // LINE風トーク一覧画面（参加済みルーム＋参加可能な公開ルーム）
+  // LINE風トーク一覧画面（参加済みルームのみ表示）
   // =========================================================
   function openRoomListScreen() {
     isViewingRoomList = true;
@@ -2653,21 +2970,22 @@
     listEl.innerHTML = '';
 
     const visibleRooms = getAccessibleRooms();
-    const joinableRooms = getJoinablePublicRooms();
-
     document.getElementById('roomListHeaderTitle').textContent = `💬 トーク一覧（${visibleRooms.length}）`;
 
-    if (joinableRooms.length > 0) {
-      const sec1 = document.createElement('div');
-      sec1.className = 'room-section-label';
-      sec1.textContent = '参加中のトークルーム';
-      listEl.appendChild(sec1);
+    if (visibleRooms.length === 0) {
+      listEl.innerHTML = `
+        <div style="padding:36px 20px; text-align:center; color:#64748b; font-size:13px; line-height:1.6;">
+          参加中のトークルームはまだありません。<br>
+          下の <strong>「🔑 パスコードを入力して別グループに参加」</strong> から入室してください。
+        </div>
+      `;
     }
 
-    visibleRooms.forEach(r => {
-      normalizeRoomArrays(r);
+    visibleRooms.forEach((r, idx) => {
+      normalizeRoomArrays(r, idx);
       const msgs = r.messages || [];
       const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : null;
+      const myRoomProf = getMyProfileForRoom(r);
 
       let previewText = 'メッセージはまだありません';
       let lastTime = '';
@@ -2705,6 +3023,7 @@
             <div class="line-room-preview">${escapeHtml(previewText)}</div>
             ${unreadCount > 0 ? `<div class="unread-badge">${unreadCount}</div>` : ''}
           </div>
+          <div style="font-size:10px; color:#06c755; margin-top:2px;">👤 自分の表示名: ${escapeHtml(myRoomProf ? myRoomProf.name : currentUser.name)}</div>
         </div>
       `;
       row.addEventListener('click', () => {
@@ -2716,44 +3035,6 @@
       });
       listEl.appendChild(row);
     });
-
-    // 鍵がかかっていない公開グループがあれば一覧からワンタップ参加可能に表示
-    if (joinableRooms.length > 0) {
-      const sec2 = document.createElement('div');
-      sec2.className = 'room-section-label';
-      sec2.textContent = '＋ タップして参加できる公開ルーム';
-      listEl.appendChild(sec2);
-
-      joinableRooms.forEach(r => {
-        normalizeRoomArrays(r);
-        const row = document.createElement('div');
-        row.className = 'line-room-row';
-        row.innerHTML = `
-          <div class="line-room-icon joinable">＋</div>
-          <div class="line-room-main">
-            <div class="line-room-top">
-              <div class="line-room-title">${escapeHtml(getDisplayRoomName(r, false))} (${r.members.length}人)</div>
-            </div>
-            <div class="line-room-bottom">
-              <div class="line-room-preview">タップするとこのトークに参加して開きます</div>
-              <div class="join-room-pill">参加する</div>
-            </div>
-          </div>
-        `;
-        row.addEventListener('click', () => {
-          if (!confirm(`「${getDisplayRoomName(r, false)}」に参加しますか？`)) return;
-          r.members.push({ ...currentUser, role: 'member', fcmToken: registeredFcmToken || '' });
-          r.messages.push({ type: 'divider', text: `ここから ${currentUser.name} が参加` });
-          currentRoomId = r.id;
-          isViewingRoomList = false;
-          markRoomAsRead(r);
-          saveShared(true);
-          document.getElementById('roomListScreen').classList.add('hidden');
-          renderAll();
-        });
-        listEl.appendChild(row);
-      });
-    }
 
     document.getElementById('roomListScreen').classList.remove('hidden');
   }
@@ -2801,9 +3082,10 @@
     const isGlobalAdmin = currentUser.id === sharedState.creatorId;
     document.getElementById('openAdminScreenBtn').style.display = isGlobalAdmin ? 'inline-block' : 'none';
 
+    const myProf = getMyProfileForRoom(room);
     const roomTitle = (room.isLocked ? '🔒 ' : '') + getDisplayRoomName(room, isGlobalAdmin);
     document.getElementById('headerRoomName').textContent = `${roomTitle} (${room.members.length})`;
-    document.getElementById('headerUserStatus').textContent = `👥 メンバー ${room.members.length}人（タップで一覧）`;
+    document.getElementById('headerUserStatus').textContent = `👤 ${myProf.name} で参加中（メンバー一覧＞）`;
 
     renderMessages(room);
     renderNotes(room);
@@ -2812,9 +3094,9 @@
 
   document.getElementById('quickInviteBtn').addEventListener('click', () => {
     const room = getCurrentRoom();
-    const url = buildRoomInviteUrl(room.id);
-    navigator.clipboard?.writeText(url);
-    alert(`この部屋専用の招待URLをコピーしました！\n\n${url}`);
+    const shareText = buildPasscodeShareText(room);
+    navigator.clipboard?.writeText(shareText);
+    alert(`この部屋の「アプリURL＋パスコード」をコピーしました！\n\n${shareText}`);
   });
 
   function renderMessages(room) {
@@ -2927,15 +3209,16 @@
     if (!text) return;
 
     const room = getCurrentRoom();
+    const myProf = getMyProfileForRoom(room);
     const isMemberOfRoom = (room.members || []).some(m => m.id === currentUser.id);
     const msgObj = {
       type: 'msg',
       senderId: currentUser.id,
-      senderName: currentUser.name,
-      avatar: currentUser.avatar,
-      isImg: currentUser.isImg,
+      senderName: myProf.name,
+      avatar: myProf.avatar,
+      isImg: myProf.isImg,
       role: getMyRoleInRoom(room),
-      xHandle: currentUser.xHandle || '',
+      xHandle: myProf.xHandle || '',
       text: text,
       readBy: isMemberOfRoom ? [currentUser.id] : [],
       time: getTime()
@@ -2958,15 +3241,16 @@
   function handleChatUpload(file, mediaType) {
     readAttachFile(file, mediaType, (res) => {
       const room = getCurrentRoom();
+      const myProf = getMyProfileForRoom(room);
       const isMemberOfRoom = (room.members || []).some(m => m.id === currentUser.id);
       room.messages.push({
         type: 'msg',
         senderId: currentUser.id,
-        senderName: currentUser.name,
-        avatar: currentUser.avatar,
-        isImg: currentUser.isImg,
+        senderName: myProf.name,
+        avatar: myProf.avatar,
+        isImg: myProf.isImg,
         role: getMyRoleInRoom(room),
-        xHandle: currentUser.xHandle || '',
+        xHandle: myProf.xHandle || '',
         mediaType: res.type,
         mediaData: res.data,
         fileName: res.name,
@@ -3148,563 +3432,4 @@
   });
   document.getElementById('editNoteImgBtn').addEventListener('click', () => document.getElementById('editNoteImgInput').click());
   document.getElementById('editNoteImgInput').addEventListener('change', (e) => {
-    readAttachFile(e.target.files[0], 'image', (res) => { editingNoteAttach = res; updateEditNoteAttachUI(); });
-    e.target.value = '';
-  });
-  document.getElementById('editNoteVidBtn').addEventListener('click', () => document.getElementById('editNoteVidInput').click());
-  document.getElementById('editNoteVidInput').addEventListener('change', (e) => {
-    readAttachFile(e.target.files[0], 'video', (res) => { editingNoteAttach = res; updateEditNoteAttachUI(); });
-    e.target.value = '';
-  });
-  document.getElementById('editNoteFileBtn').addEventListener('click', () => document.getElementById('editNoteFileInput').click());
-  document.getElementById('editNoteFileInput').addEventListener('change', (e) => {
-    readAttachFile(e.target.files[0], 'file', (res) => { editingNoteAttach = res; updateEditNoteAttachUI(); });
-    e.target.value = '';
-  });
-
-  document.getElementById('saveEditedNoteBtn').addEventListener('click', () => {
-    const room = getCurrentRoom();
-    const note = room.notes.find(n => n.id === editingNoteId);
-    if (!note || !canManageItem(room, note.authorId, note.author)) return;
-
-    const title = document.getElementById('editNoteTitleInput').value.trim();
-    const body = document.getElementById('editNoteBodyInput').value.trim();
-    if (!title || !body) return alert('タイトルと本文を入力してください');
-
-    note.title = title;
-    note.body = body;
-    note.attachType = editingNoteAttach ? editingNoteAttach.type : null;
-    note.attachData = editingNoteAttach ? editingNoteAttach.data : null;
-    note.attachName = editingNoteAttach ? editingNoteAttach.name : '';
-    note.attachSize = editingNoteAttach ? editingNoteAttach.size : '';
-
-    saveShared();
-    document.getElementById('editNoteModal').classList.add('hidden');
-    renderNotes(room);
-  });
-  document.getElementById('closeEditNoteBtn').addEventListener('click', () => {
-    document.getElementById('editNoteModal').classList.add('hidden');
-  });
-
-  document.getElementById('postNoteBtn').addEventListener('click', () => {
-    const title = document.getElementById('noteTitleInput').value.trim();
-    const body = document.getElementById('noteBodyInput').value.trim();
-    if (!title || !body) return alert('タイトルと本文を入力してください');
-    const room = getCurrentRoom();
-    room.notes.push({
-      id: 'n_' + Date.now(),
-      authorId: currentUser.id,
-      author: currentUser.name,
-      title,
-      body,
-      attachType: pendingNoteAttach ? pendingNoteAttach.type : null,
-      attachData: pendingNoteAttach ? pendingNoteAttach.data : null,
-      attachName: pendingNoteAttach ? pendingNoteAttach.name : '',
-      attachSize: pendingNoteAttach ? pendingNoteAttach.size : '',
-      likes: 0
-    });
-    document.getElementById('noteTitleInput').value = '';
-    document.getElementById('noteBodyInput').value = '';
-    pendingNoteAttach = null;
-    document.getElementById('noteAttachPreview').textContent = '';
-    saveShared();
-    renderNotes(room);
-  });
-
-  document.getElementById('prevMonthBtn').addEventListener('click', () => {
-    calDate.setMonth(calDate.getMonth() - 1);
-    renderCalendarAndEvents(getCurrentRoom());
-  });
-  document.getElementById('nextMonthBtn').addEventListener('click', () => {
-    calDate.setMonth(calDate.getMonth() + 1);
-    renderCalendarAndEvents(getCurrentRoom());
-  });
-
-  function renderCalendarAndEvents(room) {
-    const year = calDate.getFullYear();
-    const month = calDate.getMonth();
-    document.getElementById('calMonthTitle').textContent = `${year}年 ${month + 1}月`;
-
-    const grid = document.getElementById('calGridEl');
-    grid.innerHTML = '';
-    ['日', '月', '火', '水', '木', '金', '土'].forEach(d => {
-      const dow = document.createElement('div');
-      dow.className = 'cal-dow';
-      dow.textContent = d;
-      grid.appendChild(dow);
-    });
-
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-    const events = room.events || [];
-    const eventDates = new Set(events.map(e => getEventDateOnly(e)));
-
-    for (let i = 0; i < firstDay; i++) {
-      const empty = document.createElement('div');
-      empty.className = 'cal-cell empty';
-      grid.appendChild(empty);
-    }
-
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const cell = document.createElement('div');
-      cell.className = 'cal-cell';
-      if (dateStr === todayStr) cell.classList.add('today');
-      if (dateStr === selectedDateFilter) cell.classList.add('selected');
-      cell.innerHTML = `<span>${d}</span>${eventDates.has(dateStr) ? '<span class="cal-dot"></span>' : ''}`;
-      cell.addEventListener('click', () => {
-        selectedDateFilter = (selectedDateFilter === dateStr) ? null : dateStr;
-        renderCalendarAndEvents(room);
-      });
-      grid.appendChild(cell);
-    }
-
-    const filterStatus = document.getElementById('calFilterStatus');
-    if (selectedDateFilter) {
-      filterStatus.innerHTML = `📅 <strong>${selectedDateFilter}</strong> の予定を表示中（<span style="text-decoration:underline; cursor:pointer;" onclick="clearDateFilter()">すべて表示に戻す</span>）`;
-    } else {
-      filterStatus.textContent = '●印の日付をタップすると予定を絞り込めます';
-    }
-
-    const list = document.getElementById('eventListEl');
-    list.innerHTML = '';
-    const filtered = selectedDateFilter ? events.filter(e => getEventDateOnly(e) === selectedDateFilter) : events;
-
-    if (filtered.length === 0) {
-      list.innerHTML = `<div style="text-align:center; font-size:12px; color:#64748b; padding:12px;">登録されているイベントはありません</div>`;
-      return;
-    }
-
-    filtered.slice().sort((a, b) => {
-      const ka = getEventDateOnly(a) + (a.startTime || '');
-      const kb = getEventDateOnly(b) + (b.startTime || '');
-      return ka.localeCompare(kb);
-    }).forEach(ev => {
-      const me = currentUser.name;
-      const going = ev.going || [];
-      const maybe = ev.maybe || [];
-      const notGoing = ev.notGoing || [];
-
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.style.cursor = 'pointer';
-
-      const dateOnly = getEventDateOnly(ev);
-      const timeRange = getEventTimeRangeText(ev);
-      const dateHeader = timeRange ? `${dateOnly} ${timeRange}` : dateOnly;
-
-      let tagsHtml = '';
-      if (ev.openTime) tagsHtml += `<span class="ev-tag">🚪 開場 ${escapeHtml(ev.openTime)}</span>`;
-      if (ev.location) tagsHtml += `<span class="ev-tag">📍 ${linkifyText(ev.location)}</span>`;
-
-      const safeFormUrl = normalizeHttpUrl(ev.formUrl);
-      const formBtnHtml = safeFormUrl
-        ? `<a href="${escapeHtml(safeFormUrl)}" target="_blank" rel="noopener noreferrer" class="form-apply-btn" onclick="event.stopPropagation()">📝 申し込みフォームを開く</a>`
-        : '';
-
-      const goingChips = going.length
-        ? going.map(n => `<span class="name-chip">${escapeHtml(n)}</span>`).join('')
-        : '<span style="color:#94a3b8; font-size:11px;">まだいません</span>';
-      const maybeChips = maybe.length
-        ? `<div class="participant-row"><span style="font-size:11px; color:#64748b;">🤔 未定(${maybe.length}):</span>${maybe.map(n => `<span class="name-chip maybe">${escapeHtml(n)}</span>`).join('')}</div>`
-        : '';
-
-      const inlinePreviewHtml = ev.attachType === 'image'
-        ? `<div class="media-block" onclick="event.stopPropagation(); openImageViewer('${ev.attachData}')"><img src="${ev.attachData}" class="board-media" style="max-height:160px;" /></div>`
-        : (ev.attachType ? `<div style="margin-top:4px;"><span style="font-size:10px; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px;">${ev.attachType === 'video' ? '🎬 動画あり（詳細で再生）' : '📎 ファイルあり（詳細で保存）'}</span></div>` : '');
-
-      const allowed = canManageItem(room, ev.authorId, ev.author);
-      const ownerBar = allowed ? `
-        <div class="card-actions-bar" style="border-top:1px solid #f1f5f9; padding-top:8px;" onclick="event.stopPropagation()">
-          <span style="font-size:10px; color:#64748b;">作成: ${escapeHtml(ev.author || 'メンバー')}</span>
-          <div style="display:flex; gap:5px;">
-            <button class="edit-mini-btn" onclick="openEditEventModal('${ev.id}')">✏️ 編集</button>
-            <button class="danger-btn" onclick="deleteEvent('${ev.id}')">🗑️ 削除</button>
-          </div>
-        </div>` : '';
-
-      card.innerHTML = `
-        <div onclick="openEventDetail('${ev.id}')">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:11px; color:#06c755; font-weight:bold;">📅 ${escapeHtml(dateHeader)}</span>
-            <span style="font-size:11px; color:#64748b;">詳細を見る ＞</span>
-          </div>
-          <div class="card-title" style="margin-top:4px;">${escapeHtml(ev.title)}</div>
-          ${tagsHtml ? `<div class="ev-meta-tags">${tagsHtml}</div>` : ''}
-          ${ev.desc ? `<div style="font-size:12px; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${linkifyText(ev.desc)}</div>` : ''}
-          ${formBtnHtml}
-          ${inlinePreviewHtml}
-          <div class="participant-box">
-            <div class="participant-row">
-              <span style="font-size:11px; font-weight:bold; color:#0f172a;">🙋 参加(${going.length}人):</span>
-              ${goingChips}
-            </div>
-            ${maybeChips}
-          </div>
-        </div>
-        <div class="rsvp-group" onclick="event.stopPropagation()">
-          <button class="rsvp-btn ${going.includes(me) ? 'selected' : ''}" onclick="setRsvp('${ev.id}','going')">🙋 参加</button>
-          <button class="rsvp-btn ${maybe.includes(me) ? 'selected' : ''}" onclick="setRsvp('${ev.id}','maybe')">🤔 未定</button>
-          <button class="rsvp-btn ${notGoing.includes(me) ? 'selected' : ''}" onclick="setRsvp('${ev.id}','notGoing')">🙅 不参加</button>
-        </div>
-        ${ownerBar}
-      `;
-      list.appendChild(card);
-    });
-  }
-
-  window.clearDateFilter = () => { selectedDateFilter = null; renderCalendarAndEvents(getCurrentRoom()); };
-
-  window.deleteEvent = (id) => {
-    const room = getCurrentRoom();
-    const ev = room.events.find(e => e.id === id);
-    if (!ev || !canManageItem(room, ev.authorId, ev.author)) return alert('削除権限がありません');
-    if (!confirm(`イベント「${ev.title}」を削除しますか？`)) return;
-    room.events = room.events.filter(e => e.id !== id);
-    document.getElementById('eventDetailModal').classList.add('hidden');
-    saveShared();
-    renderCalendarAndEvents(room);
-  };
-
-  window.openEditEventModal = (id) => {
-    const room = getCurrentRoom();
-    const ev = room.events.find(e => e.id === id);
-    if (!ev || !canManageItem(room, ev.authorId, ev.author)) return alert('編集権限がありません');
-
-    document.getElementById('eventDetailModal').classList.add('hidden');
-    editingEventId = id;
-    document.getElementById('editEvTitleInput').value = ev.title;
-    document.getElementById('editEvDateOnlyInput').value = getEventDateOnly(ev);
-    document.getElementById('editEvStartTimeInput').value = ev.startTime || '';
-    document.getElementById('editEvEndTimeInput').value = ev.endTime || '';
-    document.getElementById('editEvOpenTimeInput').value = ev.openTime || '';
-    document.getElementById('editEvLocationInput').value = ev.location || '';
-    document.getElementById('editEvFormUrlInput').value = ev.formUrl || '';
-    document.getElementById('editEvDescInput').value = ev.desc || '';
-
-    editingEventAttach = ev.attachType ? {
-      type: ev.attachType, data: ev.attachData, name: ev.attachName, size: ev.attachSize
-    } : null;
-    updateEditEvAttachUI();
-    document.getElementById('editEventModal').classList.remove('hidden');
-  };
-
-  function updateEditEvAttachUI() {
-    const st = document.getElementById('editEvAttachStatus');
-    const clr = document.getElementById('clearEditEvAttachBtn');
-    if (editingEventAttach) {
-      st.textContent = `📎 ${editingEventAttach.name} (${editingEventAttach.size})`;
-      clr.style.display = 'inline-block';
-    } else {
-      st.textContent = '添付ファイルなし';
-      clr.style.display = 'none';
-    }
-  }
-  document.getElementById('clearEditEvAttachBtn').addEventListener('click', () => {
-    editingEventAttach = null;
-    updateEditEvAttachUI();
-  });
-  document.getElementById('editEvImgBtn').addEventListener('click', () => document.getElementById('editEvImgInput').click());
-  document.getElementById('editEvImgInput').addEventListener('change', (e) => {
-    readAttachFile(e.target.files[0], 'image', (res) => { editingEventAttach = res; updateEditEvAttachUI(); });
-    e.target.value = '';
-  });
-  document.getElementById('editEvVidBtn').addEventListener('click', () => document.getElementById('editEvVidInput').click());
-  document.getElementById('editEvVidInput').addEventListener('change', (e) => {
-    readAttachFile(e.target.files[0], 'video', (res) => { editingEventAttach = res; updateEditEvAttachUI(); });
-    e.target.value = '';
-  });
-  document.getElementById('editEvFileBtn').addEventListener('click', () => document.getElementById('editEvFileInput').click());
-  document.getElementById('editEvFileInput').addEventListener('change', (e) => {
-    readAttachFile(e.target.files[0], 'file', (res) => { editingEventAttach = res; updateEditEvAttachUI(); });
-    e.target.value = '';
-  });
-
-  document.getElementById('saveEditedEventBtn').addEventListener('click', () => {
-    const room = getCurrentRoom();
-    const ev = room.events.find(e => e.id === editingEventId);
-    if (!ev || !canManageItem(room, ev.authorId, ev.author)) return;
-
-    const title = document.getElementById('editEvTitleInput').value.trim();
-    const dateOnly = document.getElementById('editEvDateOnlyInput').value;
-    if (!title || !dateOnly) return alert('イベント名と開催日を入力してください');
-
-    ev.title = title;
-    ev.dateOnly = dateOnly;
-    ev.startTime = document.getElementById('editEvStartTimeInput').value;
-    ev.endTime = document.getElementById('editEvEndTimeInput').value;
-    ev.openTime = document.getElementById('editEvOpenTimeInput').value;
-    ev.location = document.getElementById('editEvLocationInput').value.trim();
-    ev.formUrl = document.getElementById('editEvFormUrlInput').value.trim();
-    ev.desc = document.getElementById('editEvDescInput').value.trim();
-    ev.attachType = editingEventAttach ? editingEventAttach.type : null;
-    ev.attachData = editingEventAttach ? editingEventAttach.data : null;
-    ev.attachName = editingEventAttach ? editingEventAttach.name : '';
-    ev.attachSize = editingEventAttach ? editingEventAttach.size : '';
-
-    saveShared();
-    document.getElementById('editEventModal').classList.add('hidden');
-    renderCalendarAndEvents(room);
-  });
-  document.getElementById('closeEditEventBtn').addEventListener('click', () => {
-    document.getElementById('editEventModal').classList.add('hidden');
-  });
-
-  window.openEventDetail = (id) => {
-    const room = getCurrentRoom();
-    const ev = room.events.find(e => e.id === id);
-    if (!ev) return;
-
-    const dateOnly = getEventDateOnly(ev);
-    const timeRange = getEventTimeRangeText(ev);
-    document.getElementById('evDetailDate').textContent = '📅 ' + dateOnly;
-    document.getElementById('evDetailTitle').textContent = ev.title;
-
-    let metaLines = [];
-    if (timeRange) metaLines.push(`⏰ <strong>時間：</strong>${escapeHtml(timeRange)}`);
-    if (ev.openTime) metaLines.push(`🚪 <strong>開場時間：</strong>${escapeHtml(ev.openTime)}`);
-    if (ev.location) metaLines.push(`📍 <strong>場所：</strong>${linkifyText(ev.location)}`);
-    const metaBox = document.getElementById('evDetailMetaBox');
-    if (metaLines.length > 0) {
-      metaBox.innerHTML = metaLines.join('<br>');
-      metaBox.style.display = 'block';
-    } else {
-      metaBox.style.display = 'none';
-    }
-
-    const safeFormUrl = normalizeHttpUrl(ev.formUrl);
-    const formBtnArea = document.getElementById('evDetailFormBtnArea');
-    if (safeFormUrl) {
-      formBtnArea.style.display = 'block';
-      formBtnArea.innerHTML = `
-        <a href="${escapeHtml(safeFormUrl)}" target="_blank" rel="noopener noreferrer" class="form-apply-btn" style="margin-top:0;">
-          📝 申し込みフォームを開く
-        </a>
-        <div style="font-size:10px; color:#64748b; word-break:break-all; margin-top:4px;">${escapeHtml(safeFormUrl)}</div>
-      `;
-    } else {
-      formBtnArea.style.display = 'none';
-      formBtnArea.innerHTML = '';
-    }
-
-    const descEl = document.getElementById('evDetailDesc');
-    descEl.innerHTML = ev.desc ? linkifyText(ev.desc) : '（詳細メモはありません）';
-    document.getElementById('evDetailAttachArea').innerHTML = renderAttachmentHtml(ev.attachType, ev.attachData, ev.attachName, ev.attachSize);
-
-    const going = ev.going || [];
-    const maybe = ev.maybe || [];
-    const notGoing = ev.notGoing || [];
-
-    document.getElementById('evDetailMembers').innerHTML = `
-      <div class="participant-row" style="margin-bottom:6px;">
-        <span style="font-weight:bold;">🙋 参加 (${going.length}人):</span>
-        ${going.length ? going.map(n => `<span class="name-chip">${escapeHtml(n)}</span>`).join('') : '<span style="color:#94a3b8;">なし</span>'}
-      </div>
-      <div class="participant-row" style="margin-bottom:6px;">
-        <span style="font-weight:bold;">🤔 未定 (${maybe.length}人):</span>
-        ${maybe.length ? maybe.map(n => `<span class="name-chip maybe">${escapeHtml(n)}</span>`).join('') : '<span style="color:#94a3b8;">なし</span>'}
-      </div>
-      <div class="participant-row">
-        <span style="font-weight:bold;">🙅 不参加 (${notGoing.length}人):</span>
-        <span style="color:#64748b;">${notGoing.length ? notGoing.map(n => escapeHtml(n)).join('、') : 'なし'}</span>
-      </div>
-    `;
-
-    const ownerBox = document.getElementById('evDetailOwnerActions');
-    if (canManageItem(room, ev.authorId, ev.author)) {
-      ownerBox.style.display = 'flex';
-      ownerBox.innerHTML = `
-        <button class="edit-mini-btn" style="flex:1; padding:9px;" onclick="openEditEventModal('${ev.id}')">✏️ イベントを編集</button>
-        <button class="danger-btn" style="flex:1; padding:9px;" onclick="deleteEvent('${ev.id}')">🗑️ イベントを削除</button>
-      `;
-    } else {
-      ownerBox.style.display = 'none';
-      ownerBox.innerHTML = '';
-    }
-
-    document.getElementById('eventDetailModal').classList.remove('hidden');
-  };
-
-  document.getElementById('closeEvDetailBtn').addEventListener('click', () => {
-    document.getElementById('eventDetailModal').classList.add('hidden');
-  });
-
-  document.getElementById('evAttachImgBtn').addEventListener('click', () => document.getElementById('evImgInput').click());
-  document.getElementById('evImgInput').addEventListener('change', (e) => {
-    readAttachFile(e.target.files[0], 'image', (res) => {
-      pendingEvAttach = res;
-      document.getElementById('evAttachPreview').textContent = `✅ 添付: ${res.name} (${res.size})`;
-    });
-    e.target.value = '';
-  });
-  document.getElementById('evAttachVidBtn').addEventListener('click', () => document.getElementById('evVidInput').click());
-  document.getElementById('evVidInput').addEventListener('change', (e) => {
-    readAttachFile(e.target.files[0], 'video', (res) => {
-      pendingEvAttach = res;
-      document.getElementById('evAttachPreview').textContent = `✅ 添付: ${res.name} (${res.size})`;
-    });
-    e.target.value = '';
-  });
-  document.getElementById('evAttachFileBtn').addEventListener('click', () => document.getElementById('evFileInput').click());
-  document.getElementById('evFileInput').addEventListener('change', (e) => {
-    readAttachFile(e.target.files[0], 'file', (res) => {
-      pendingEvAttach = res;
-      document.getElementById('evAttachPreview').textContent = `✅ 添付: ${res.name} (${res.size})`;
-    });
-    e.target.value = '';
-  });
-
-  window.setRsvp = (id, status) => {
-    const room = getCurrentRoom();
-    const ev = room.events.find(e => e.id === id);
-    const me = currentUser.name;
-    if (!ev) return;
-    ev.going = (ev.going || []).filter(x => x !== me);
-    ev.maybe = (ev.maybe || []).filter(x => x !== me);
-    ev.notGoing = (ev.notGoing || []).filter(x => x !== me);
-    ev[status].push(me);
-    saveShared();
-    renderCalendarAndEvents(room);
-  };
-
-  document.getElementById('postEventBtn').addEventListener('click', () => {
-    const title = document.getElementById('eventTitleInput').value.trim();
-    const dateOnly = document.getElementById('eventDateOnlyInput').value;
-    const startTime = document.getElementById('eventStartTimeInput').value;
-    const endTime = document.getElementById('eventEndTimeInput').value;
-    const openTime = document.getElementById('eventOpenTimeInput').value;
-    const location = document.getElementById('eventLocationInput').value.trim();
-    const formUrl = document.getElementById('eventFormUrlInput').value.trim();
-    const desc = document.getElementById('eventDescInput').value.trim();
-
-    if (!title || !dateOnly) return alert('イベント名と開催日を入力してください');
-
-    const room = getCurrentRoom();
-    room.events.push({
-      id: 'e_' + Date.now(),
-      authorId: currentUser.id,
-      author: currentUser.name,
-      title,
-      dateOnly,
-      startTime,
-      endTime,
-      openTime,
-      location,
-      formUrl,
-      desc,
-      attachType: pendingEvAttach ? pendingEvAttach.type : null,
-      attachData: pendingEvAttach ? pendingEvAttach.data : null,
-      attachName: pendingEvAttach ? pendingEvAttach.name : '',
-      attachSize: pendingEvAttach ? pendingEvAttach.size : '',
-      going: [currentUser.name], maybe: [], notGoing: []
-    });
-
-    document.getElementById('eventTitleInput').value = '';
-    document.getElementById('eventDateOnlyInput').value = '';
-    document.getElementById('eventStartTimeInput').value = '';
-    document.getElementById('eventEndTimeInput').value = '';
-    document.getElementById('eventOpenTimeInput').value = '';
-    document.getElementById('eventLocationInput').value = '';
-    document.getElementById('eventFormUrlInput').value = '';
-    document.getElementById('eventDescInput').value = '';
-    pendingEvAttach = null;
-    document.getElementById('evAttachPreview').textContent = '';
-    saveShared();
-    renderCalendarAndEvents(room);
-  });
-
-  // =========================================================
-  // 起動＆Firebaseリアルタイム同期リスナー
-  // =========================================================
-  updateNotifyBtnUI();
-
-  function handleSyncedData(remoteData) {
-    if (remoteData && remoteData.rooms && Array.isArray(remoteData.rooms) && remoteData.rooms.length > 0) {
-      sharedState = remoteData;
-      if (!sharedState.adminPassword) sharedState.adminPassword = '9696';
-      if (!sharedState.adminEmail) sharedState.adminEmail = 'miyairi1022@gmail.com';
-      if (!sharedState.termsText) sharedState.termsText = DEFAULT_TERMS;
-      sharedState.rooms.forEach(normalizeRoomArrays);
-    }
-
-    document.getElementById('joinTermsText').textContent = sharedState.termsText || DEFAULT_TERMS;
-
-    if (currentUser) {
-      if (!sharedState.creatorId && currentUser.id && currentUser.id.startsWith('u_admin_')) {
-        sharedState.creatorId = currentUser.id;
-      }
-
-      if (invitedRoomId) {
-        const target = sharedState.rooms.find(r => r.id === invitedRoomId);
-        if (target) {
-          normalizeRoomArrays(target);
-          const alreadyIn = target.members.some(m => m.id === currentUser.id || m.name === currentUser.name);
-          if (!alreadyIn) {
-            if (target.isLocked && currentUser.id !== sharedState.creatorId) {
-              alert('このグループは鍵がかかっているため入室できません。');
-            } else {
-              target.members.push({ ...currentUser, role: 'member', fcmToken: registeredFcmToken || '' });
-              target.messages.push({ type: 'divider', text: `ここから ${currentUser.name} が招待URLから参加` });
-              currentRoomId = target.id;
-              isViewingRoomList = false;
-              saveShared(true);
-            }
-          } else {
-            currentRoomId = target.id;
-            isViewingRoomList = false;
-          }
-        }
-      } else if (!currentRoomId) {
-        const accessible = getAccessibleRooms();
-        if (accessible.length > 0) currentRoomId = accessible[0].id;
-      }
-
-      document.getElementById('joinScreen').classList.add('hidden');
-      checkAndTriggerIncomingNotification(sharedState);
-
-      if (isViewingRoomList) {
-        openRoomListScreen();
-      } else {
-        document.getElementById('roomListScreen').classList.add('hidden');
-        renderAll();
-      }
-
-      syncUserFcmToken(false);
-
-      if (isAdminDirectUrl && !isInitialLoadDone) {
-        openAdminAuthModal();
-      }
-    } else {
-      if (invitedRoomId) {
-        const target = sharedState.rooms.find(r => r.id === invitedRoomId);
-        if (target) {
-          document.getElementById('joinRoomNotice').textContent = '専用招待リンクから参加します（利用規約を確認してください）';
-        }
-      }
-      if (isAdminDirectUrl && !isInitialLoadDone) {
-        isInitialLoadDone = true;
-        openAdminAuthModal();
-      }
-    }
-  }
-
-  if (dbRef && isFirebaseConnected) {
-    dbRef.on('value', (snapshot) => {
-      const val = snapshot.val();
-      hasReceivedInitialFirebase = true;
-      if (!val) {
-        saveShared(true);
-        handleSyncedData(null);
-      } else {
-        handleSyncedData(val);
-      }
-    });
-  } else {
-    hasReceivedInitialFirebase = true;
-    handleSyncedData(null);
-  }
-</script>
-</body>
-</html>
+    readAttach
