@@ -405,6 +405,9 @@
       width: 46px; height: 46px; border-radius: 50%; background: #222e42; color: #fff;
       display: flex; justify-content: center; align-items: center; font-size: 20px; flex-shrink: 0;
     }
+    .line-room-icon.joinable {
+      background: #06c755;
+    }
     .line-room-main { flex: 1; overflow: hidden; }
     .line-room-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
     .line-room-title { font-size: 14px; font-weight: bold; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -415,6 +418,14 @@
       background: #06c755; color: #fff; font-size: 10px; font-weight: bold;
       min-width: 18px; height: 18px; border-radius: 9px; padding: 0 5px;
       display: flex; justify-content: center; align-items: center; flex-shrink: 0; margin-left: 6px;
+    }
+    .join-room-pill {
+      background: #06c755; color: #fff; font-size: 11px; font-weight: bold;
+      padding: 4px 10px; border-radius: 12px; flex-shrink: 0; margin-left: 6px;
+    }
+    .room-section-label {
+      background: #f1f5f9; color: #475569; font-size: 11px; font-weight: bold;
+      padding: 6px 14px; border-bottom: 1px solid #e2e8f0;
     }
 
     .member-list-item {
@@ -551,11 +562,15 @@
     </button>
   </div>
 
-  <!-- 2. LINE風・トークルーム一覧画面 -->
+  <!-- 2. LINE風・トークルーム一覧画面（最初のホーム画面） -->
   <div class="full-screen hidden" id="roomListScreen">
     <div class="screen-header">
       <span id="roomListHeaderTitle">💬 トーク一覧</span>
-      <button id="closeRoomListBtn" style="background:rgba(255,255,255,0.2); border:none; color:#fff; padding:5px 10px; border-radius:6px; font-size:12px; cursor:pointer;">戻る</button>
+      <div style="display:flex; align-items:center; gap:5px;">
+        <button id="roomListNotifyBtn" class="icon-btn notify-off">🔔 通知</button>
+        <button id="roomListProfileBtn" class="icon-btn">👤</button>
+        <button id="roomListAdminBtn" class="icon-btn admin-btn" style="display:none;">⚙️</button>
+      </div>
     </div>
     <div style="flex:1; overflow-y:auto; background:#fff;" id="roomListEl"></div>
     <div style="padding:12px; border-top:1px solid #e2e8f0; background:#f8fafc;">
@@ -692,7 +707,7 @@
   <div class="full-screen hidden" id="adminDashboardScreen">
     <div class="screen-header">
       <span>⚙️ 管理人専用コントロール画面</span>
-      <button id="closeAdminScreenBtn" style="background:rgba(255,255,255,0.2); border:none; color:#fff; padding:5px 10px; border-radius:6px; font-size:12px; cursor:pointer;">トークへ戻る</button>
+      <button id="closeAdminScreenBtn" style="background:rgba(255,255,255,0.2); border:none; color:#fff; padding:5px 10px; border-radius:6px; font-size:12px; cursor:pointer;">閉じる</button>
     </div>
     <div class="screen-body">
       <div class="card">
@@ -818,10 +833,10 @@
     </div>
   </div>
 
-  <!-- メインヘッダー -->
+  <!-- メインヘッダー（トークルーム内のヘッダー） -->
   <div class="header">
     <div class="header-left">
-      <button id="menuBtn" class="icon-btn">≡ 一覧<span id="totalUnreadBadge" class="total-unread-dot" style="display:none;">0</span></button>
+      <button id="menuBtn" class="icon-btn">＜ 一覧<span id="totalUnreadBadge" class="total-unread-dot" style="display:none;">0</span></button>
       <div class="room-info" onclick="openRoomMembersModal()" title="タップして参加メンバーを表示">
         <div class="room-name" id="headerRoomName">雑談メインルーム (1)</div>
         <div class="room-sub" id="headerUserStatus">👥 メンバーを見る ＞</div>
@@ -881,7 +896,7 @@
 
         <input type="file" id="noteImgInput" accept="image/*" style="display:none;" />
         <input type="file" id="noteVidInput" accept="video/*" style="display:none;" />
-        <input type="file" id="noteFileInput" accept="video/*" style="display:none;" />
+        <input type="file" id="noteFileInput" style="display:none;" />
         <div class="attach-bar">
           <button type="button" id="noteAttachImgBtn" class="attach-mini-btn">📷 画像</button>
           <button type="button" id="noteAttachVidBtn" class="attach-mini-btn">🎬 動画</button>
@@ -972,7 +987,6 @@
     appId: "1:499800465396:web:222415c67701b11b0223a1"
   };
 
-  // ご指定のウェブプッシュ証明書（VAPID公開鍵）
   const FCM_VAPID_KEY = "BJ8lETBwXUzfaXCUi1bRyAk7Z0iyVxzebXJ1hbxWEO5vXF4endEKZ5St-8oa02AaqDfTC6eLM6EJ5GZV90ih_OY";
 
   let dbRef = null;
@@ -995,7 +1009,6 @@
     console.error('Firebase init error:', e);
   }
 
-  // Service Worker登録＆フォアグラウンドFCM受信設定
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').then((reg) => {
       swRegistration = reg;
@@ -1013,7 +1026,6 @@
     }).catch((err) => console.error('SW reg error:', err));
   }
 
-  // 各メンバーのFCM通知トークンを取得してFirebaseに自動登録
   async function syncUserFcmToken(showToastOnSuccess = false) {
     if (!messaging || !currentUser || !isNotifyEnabled) return null;
     if (!('Notification' in window) || Notification.permission !== 'granted') return null;
@@ -1029,7 +1041,6 @@
         registeredFcmToken = token;
         localStorage.setItem('miyachat_fcm_token_v1', token);
 
-        // 1. 専用ノード miyachat_fcm_tokens/{userId} に保存
         if (tokensDbRef) {
           await tokensDbRef.child(currentUser.id).set({
             userId: currentUser.id,
@@ -1039,7 +1050,6 @@
           });
         }
 
-        // 2. 所属ルームの各メンバーデータ内にもトークンを紐付け
         let memberUpdated = false;
         sharedState.rooms.forEach(r => {
           const m = (r.members || []).find(x => x.id === currentUser.id);
@@ -1175,6 +1185,8 @@
   let isNotifyEnabled = localStorage.getItem(LOCAL_NOTIFY_KEY) !== 'false';
   let currentRoomId = null;
 
+  // トーク一覧画面を開いている間は勝手に既読をつけないためのフラグ
+  let isViewingRoomList = true;
   let isInitialLoadDone = false;
   let lastNotifiedSignature = '';
 
@@ -1208,8 +1220,9 @@
     }
   }
 
+  // トークルームを実際に開いているときだけ既読を記録・更新する
   function markRoomAsRead(room) {
-    if (!room || !currentUser) return;
+    if (!room || !currentUser || isViewingRoomList) return;
     const msgs = room.messages || [];
     readCounts[room.id] = msgs.length;
     localStorage.setItem(LOCAL_READ_KEY, JSON.stringify(readCounts));
@@ -1239,11 +1252,22 @@
     return sharedState.rooms.filter(r => (r.members || []).some(m => m.id === currentUser.id));
   }
 
+  // 参加していないが、鍵がかかっていない公開ルーム一覧
+  function getJoinablePublicRooms() {
+    if (!currentUser) return [];
+    const isGlobalAdmin = currentUser.id === sharedState.creatorId;
+    if (isGlobalAdmin) return [];
+    return sharedState.rooms.filter(r => {
+      const isJoined = (r.members || []).some(m => m.id === currentUser.id);
+      return !isJoined && !r.isLocked;
+    });
+  }
+
   function updateTotalUnreadBadge() {
     const rooms = getAccessibleRooms();
     let totalUnread = 0;
     rooms.forEach(r => {
-      if (r.id === currentRoomId) return;
+      if (!isViewingRoomList && r.id === currentRoomId) return;
       const lastRead = readCounts[r.id] || 0;
       const diff = (r.messages || []).length - lastRead;
       if (diff > 0) totalUnread += diff;
@@ -1264,21 +1288,27 @@
   }
 
   function updateNotifyBtnUI() {
-    const btn = document.getElementById('notifyToggleBtn');
     const sysGranted = hasSystemNotificationGranted();
-    if (isNotifyEnabled && sysGranted) {
-      btn.textContent = '🔔 通知ON';
-      btn.classList.add('notify-on');
-      btn.classList.remove('notify-off');
-    } else if (isNotifyEnabled && !sysGranted) {
-      btn.textContent = '🔔 通知許可';
-      btn.classList.remove('notify-on');
-      btn.classList.remove('notify-off');
-    } else {
-      btn.textContent = '🔕 通知OFF';
-      btn.classList.remove('notify-on');
-      btn.classList.add('notify-off');
-    }
+    const btns = [
+      document.getElementById('notifyToggleBtn'),
+      document.getElementById('roomListNotifyBtn')
+    ];
+    btns.forEach(btn => {
+      if (!btn) return;
+      if (isNotifyEnabled && sysGranted) {
+        btn.textContent = '🔔 通知ON';
+        btn.classList.add('notify-on');
+        btn.classList.remove('notify-off');
+      } else if (isNotifyEnabled && !sysGranted) {
+        btn.textContent = '🔔 通知許可';
+        btn.classList.remove('notify-on');
+        btn.classList.remove('notify-off');
+      } else {
+        btn.textContent = '🔕 通知OFF';
+        btn.classList.remove('notify-on');
+        btn.classList.add('notify-off');
+      }
+    });
   }
 
   window.closeNotifyHelpModal = () => {
@@ -1314,7 +1344,7 @@
     document.getElementById('notifyHelpModal').classList.remove('hidden');
   }
 
-  document.getElementById('notifyToggleBtn').addEventListener('click', async () => {
+  async function handleNotifyButtonClick() {
     if (!('Notification' in window)) {
       openNotifyHelpModal();
       return;
@@ -1353,7 +1383,10 @@
       await syncUserFcmToken(false);
       openNotifyHelpModal();
     }
-  });
+  }
+
+  document.getElementById('notifyToggleBtn').addEventListener('click', handleNotifyButtonClick);
+  document.getElementById('roomListNotifyBtn').addEventListener('click', handleNotifyButtonClick);
 
   document.getElementById('testSystemNotifyBtn').addEventListener('click', async () => {
     if ('Notification' in window && Notification.permission !== 'granted') {
@@ -2182,7 +2215,13 @@
     await syncUserFcmToken(false);
     updateNotifyBtnUI();
     document.getElementById('joinScreen').classList.add('hidden');
-    renderAll();
+
+    if (invitedRoomId) {
+      isViewingRoomList = false;
+      renderAll();
+    } else {
+      openRoomListScreen();
+    }
 
     if (isAdminDirectUrl) openAdminAuthModal();
   });
@@ -2209,6 +2248,7 @@
   }
 
   document.getElementById('openMyProfileBtn').addEventListener('click', openMyProfileEditScreen);
+  document.getElementById('roomListProfileBtn').addEventListener('click', openMyProfileEditScreen);
   document.getElementById('openMyProfileEditFromModalBtn').addEventListener('click', () => {
     document.getElementById('userProfileModal').classList.add('hidden');
     openMyProfileEditScreen();
@@ -2279,7 +2319,8 @@
     saveShared();
     syncUserFcmToken(false);
     document.getElementById('myProfileEditScreen').classList.add('hidden');
-    renderAll();
+    if (isViewingRoomList) openRoomListScreen();
+    else renderAll();
     alert('プロフィールを更新しました！');
   });
 
@@ -2290,6 +2331,7 @@
   }
 
   document.getElementById('openAdminScreenBtn').addEventListener('click', openAdminAuthModal);
+  document.getElementById('roomListAdminBtn').addEventListener('click', openAdminAuthModal);
   document.getElementById('closeAdminAuthBtn').addEventListener('click', () => {
     document.getElementById('adminAuthModal').classList.add('hidden');
   });
@@ -2322,11 +2364,10 @@
         }
         saveShared(true);
         document.getElementById('joinScreen').classList.add('hidden');
-        renderAll();
+        openRoomListScreen();
       } else if (!sharedState.creatorId) {
         sharedState.creatorId = currentUser.id;
         saveShared(true);
-        renderAll();
       }
 
       syncUserFcmToken(false);
@@ -2354,7 +2395,7 @@
     document.getElementById('dashboardMailBtn').href = buildAdminMailtoHref();
 
     document.getElementById('firebaseSyncStatus').textContent = isFirebaseConnected
-      ? '✅ Firebase リアルタイム同期＆FCMトークン管理稼働中'
+      ? '✅ Firebase リアルタイム同期＆FCM通知稼働中'
       : '⚠️ firebaseConfigの接続確認中';
 
     const checkList = document.getElementById('adminMemberCheckList');
@@ -2423,7 +2464,7 @@
       room.messages.push({ type: 'system', text: `${m.name} の管理権限が変更されました` });
       saveShared(true);
       openAdminDashboard();
-      renderAll();
+      if (!isViewingRoomList) renderAll();
     }
   };
 
@@ -2436,12 +2477,13 @@
     room.messages.push({ type: 'system', text: `${m.name} が管理人によりグループから削除されました` });
     saveShared(true);
     openAdminDashboard();
-    renderAll();
+    if (!isViewingRoomList) renderAll();
   };
 
   document.getElementById('closeAdminScreenBtn').addEventListener('click', () => {
     document.getElementById('adminDashboardScreen').classList.add('hidden');
-    renderAll();
+    if (isViewingRoomList) openRoomListScreen();
+    else renderAll();
   });
 
   document.getElementById('adminCopyUrlBtn').addEventListener('click', () => {
@@ -2456,7 +2498,7 @@
     room.showName = (room.showName === false) ? true : false;
     saveShared(true);
     openAdminDashboard();
-    renderAll();
+    if (!isViewingRoomList) renderAll();
   });
 
   document.getElementById('adminLockToggleBtn').addEventListener('click', () => {
@@ -2468,7 +2510,7 @@
     });
     saveShared(true);
     openAdminDashboard();
-    renderAll();
+    if (!isViewingRoomList) renderAll();
   });
 
   document.getElementById('saveAdminSecurityBtn').addEventListener('click', () => {
@@ -2515,7 +2557,8 @@
     document.getElementById('adminCreatedUrlInput').value = newUrl;
     document.getElementById('adminCreatedUrlBox').style.display = 'block';
     saveShared(true);
-    renderAll();
+    if (isViewingRoomList) openRoomListScreen();
+    else renderAll();
   });
 
   document.getElementById('adminCopyCreatedUrlBtn').addEventListener('click', () => {
@@ -2526,7 +2569,6 @@
   });
 
   document.getElementById('openUserCreateGroupBtn').addEventListener('click', () => {
-    document.getElementById('roomListScreen').classList.add('hidden');
     document.getElementById('userPermissionGateBox').classList.remove('hidden');
     document.getElementById('userGroupFormBox').classList.add('hidden');
     document.getElementById('createGroupScreen').classList.remove('hidden');
@@ -2588,19 +2630,39 @@
     });
 
     currentRoomId = newId;
+    isViewingRoomList = false;
     document.getElementById('userNewGroupName').value = '';
     saveShared(true);
     document.getElementById('createGroupScreen').classList.add('hidden');
+    document.getElementById('roomListScreen').classList.add('hidden');
     renderAll();
   });
 
+  // =========================================================
+  // LINE風トーク一覧画面（参加済みルーム＋参加可能な公開ルーム）
+  // =========================================================
   function openRoomListScreen() {
+    isViewingRoomList = true;
+    updateTotalUnreadBadge();
+    updateNotifyBtnUI();
+
+    const isGlobalAdmin = currentUser.id === sharedState.creatorId;
+    document.getElementById('roomListAdminBtn').style.display = isGlobalAdmin ? 'inline-block' : 'none';
+
     const listEl = document.getElementById('roomListEl');
     listEl.innerHTML = '';
-    const isGlobalAdmin = currentUser.id === sharedState.creatorId;
+
     const visibleRooms = getAccessibleRooms();
+    const joinableRooms = getJoinablePublicRooms();
 
     document.getElementById('roomListHeaderTitle').textContent = `💬 トーク一覧（${visibleRooms.length}）`;
+
+    if (joinableRooms.length > 0) {
+      const sec1 = document.createElement('div');
+      sec1.className = 'room-section-label';
+      sec1.textContent = '参加中のトークルーム';
+      listEl.appendChild(sec1);
+    }
 
     visibleRooms.forEach(r => {
       normalizeRoomArrays(r);
@@ -2626,10 +2688,10 @@
       }
 
       const lastRead = readCounts[r.id] || 0;
-      const unreadCount = (r.id === currentRoomId) ? 0 : Math.max(0, msgs.length - lastRead);
+      const unreadCount = Math.max(0, msgs.length - lastRead);
 
       const row = document.createElement('div');
-      row.className = `line-room-row ${r.id === currentRoomId ? 'active' : ''}`;
+      row.className = 'line-room-row';
       row.innerHTML = `
         <div class="line-room-icon">${r.isLocked ? '🔒' : '💬'}</div>
         <div class="line-room-main">
@@ -2647,6 +2709,7 @@
       `;
       row.addEventListener('click', () => {
         currentRoomId = r.id;
+        isViewingRoomList = false;
         markRoomAsRead(r);
         document.getElementById('roomListScreen').classList.add('hidden');
         renderAll();
@@ -2654,13 +2717,48 @@
       listEl.appendChild(row);
     });
 
+    // 鍵がかかっていない公開グループがあれば一覧からワンタップ参加可能に表示
+    if (joinableRooms.length > 0) {
+      const sec2 = document.createElement('div');
+      sec2.className = 'room-section-label';
+      sec2.textContent = '＋ タップして参加できる公開ルーム';
+      listEl.appendChild(sec2);
+
+      joinableRooms.forEach(r => {
+        normalizeRoomArrays(r);
+        const row = document.createElement('div');
+        row.className = 'line-room-row';
+        row.innerHTML = `
+          <div class="line-room-icon joinable">＋</div>
+          <div class="line-room-main">
+            <div class="line-room-top">
+              <div class="line-room-title">${escapeHtml(getDisplayRoomName(r, false))} (${r.members.length}人)</div>
+            </div>
+            <div class="line-room-bottom">
+              <div class="line-room-preview">タップするとこのトークに参加して開きます</div>
+              <div class="join-room-pill">参加する</div>
+            </div>
+          </div>
+        `;
+        row.addEventListener('click', () => {
+          if (!confirm(`「${getDisplayRoomName(r, false)}」に参加しますか？`)) return;
+          r.members.push({ ...currentUser, role: 'member', fcmToken: registeredFcmToken || '' });
+          r.messages.push({ type: 'divider', text: `ここから ${currentUser.name} が参加` });
+          currentRoomId = r.id;
+          isViewingRoomList = false;
+          markRoomAsRead(r);
+          saveShared(true);
+          document.getElementById('roomListScreen').classList.add('hidden');
+          renderAll();
+        });
+        listEl.appendChild(row);
+      });
+    }
+
     document.getElementById('roomListScreen').classList.remove('hidden');
   }
 
   document.getElementById('menuBtn').addEventListener('click', openRoomListScreen);
-  document.getElementById('closeRoomListBtn').addEventListener('click', () => {
-    document.getElementById('roomListScreen').classList.add('hidden');
-  });
 
   function renderAttachmentHtml(type, data, name, size) {
     if (!type || !data) return '';
@@ -2694,7 +2792,9 @@
     const room = getCurrentRoom();
     if (!room) return;
     normalizeRoomArrays(room);
-    markRoomAsRead(room);
+    if (!isViewingRoomList) {
+      markRoomAsRead(room);
+    }
     updateTotalUnreadBadge();
     updateNotifyBtnUI();
 
@@ -3548,10 +3648,12 @@
               target.members.push({ ...currentUser, role: 'member', fcmToken: registeredFcmToken || '' });
               target.messages.push({ type: 'divider', text: `ここから ${currentUser.name} が招待URLから参加` });
               currentRoomId = target.id;
+              isViewingRoomList = false;
               saveShared(true);
             }
           } else {
             currentRoomId = target.id;
+            isViewingRoomList = false;
           }
         }
       } else if (!currentRoomId) {
@@ -3561,9 +3663,14 @@
 
       document.getElementById('joinScreen').classList.add('hidden');
       checkAndTriggerIncomingNotification(sharedState);
-      renderAll();
 
-      // 起動時にFCMトークンを自動同期
+      if (isViewingRoomList) {
+        openRoomListScreen();
+      } else {
+        document.getElementById('roomListScreen').classList.add('hidden');
+        renderAll();
+      }
+
       syncUserFcmToken(false);
 
       if (isAdminDirectUrl && !isInitialLoadDone) {
