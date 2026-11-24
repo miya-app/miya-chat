@@ -3946,5 +3946,87 @@
     handleSyncedData(null);
   }
 </script>
+  <!-- 管理画面：グループ名変更・履歴リセット・グループ削除 追加機能 -->
+<script>
+(function() {
+  function injectGroupManageControls() {
+    const adminScreen = document.getElementById('adminScreen');
+    if (!adminScreen || adminScreen.classList.contains('hidden')) return;
+    if (typeof sharedState === 'undefined' || !Array.isArray(sharedState.rooms)) return;
+
+    let panel = document.getElementById('customGroupManagePanel');
+    if (!panel) {
+      const body = adminScreen.querySelector('.screen-body') || adminScreen;
+      panel = document.createElement('div');
+      panel.id = 'customGroupManagePanel';
+      panel.className = 'card';
+      panel.style.marginTop = '12px';
+      body.appendChild(panel);
+    }
+
+    let html = '<div class="card-title" style="margin-bottom:8px;">🛠️ グループ管理（名前変更・リセット・削除）</div>';
+    if (sharedState.rooms.length === 0) {
+      html += '<div style="font-size:12px; color:#64748b;">グループがありません</div>';
+    } else {
+      sharedState.rooms.forEach((r, idx) => {
+        const safeName = String(r.name || '名称未設定').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        const msgCount = Array.isArray(r.messages) ? r.messages.length : 0;
+        html += `
+          <div style="border:1px solid #e2e8f0; border-radius:10px; padding:10px; margin-bottom:10px; background:#f8fafc;">
+            <div style="font-weight:bold; font-size:13px; color:#0f172a; margin-bottom:6px;">
+              ${safeName} <span style="font-size:11px; color:#64748b; font-weight:normal;">(履歴: ${msgCount}件)</span>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+              <button type="button" onclick="adminRenameRoom(${idx})" style="flex:1; min-width:95px; padding:7px 8px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#0284c7; color:#fff; cursor:pointer;">✏️ 名前変更</button>
+              <button type="button" onclick="adminResetRoomMessages(${idx})" style="flex:1; min-width:95px; padding:7px 8px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#d97706; color:#fff; cursor:pointer;">🧹 履歴リセット</button>
+              <button type="button" onclick="adminDeleteRoom(${idx})" style="flex:1; min-width:85px; padding:7px 8px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#dc2626; color:#fff; cursor:pointer;">🗑️ 削除</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+    panel.innerHTML = html;
+  }
+
+  window.adminRenameRoom = function(idx) {
+    const r = sharedState.rooms[idx];
+    if (!r) return;
+    const nextName = prompt('新しいグループ名を入力してください：', r.name || '');
+    if (nextName === null) return;
+    const trimmed = nextName.trim();
+    if (!trimmed) { alert('グループ名を入力してください。'); return; }
+    r.name = trimmed;
+    if (typeof saveSharedState === 'function') saveSharedState();
+    injectGroupManageControls();
+    alert('グループ名を「' + trimmed + '」に変更しました。');
+  };
+
+  window.adminResetRoomMessages = function(idx) {
+    const r = sharedState.rooms[idx];
+    if (!r) return;
+    if (!confirm('「' + (r.name || 'このグループ') + '」のトーク履歴をすべてリセットしますか？\n（※メンバーはそのまま残ります）')) return;
+    r.messages = [];
+    if (typeof saveSharedState === 'function') saveSharedState();
+    injectGroupManageControls();
+    alert('トーク履歴をリセットしました。');
+  };
+
+  window.adminDeleteRoom = function(idx) {
+    const r = sharedState.rooms[idx];
+    if (!r) return;
+    if (!confirm('本当に「' + (r.name || 'このグループ') + '」を完全に削除しますか？\nこの操作は取り消せません。')) return;
+    sharedState.rooms.splice(idx, 1);
+    if (typeof currentRoomId !== 'undefined' && currentRoomId === r.id) {
+      currentRoomId = sharedState.rooms[0] ? sharedState.rooms[0].id : null;
+    }
+    if (typeof saveSharedState === 'function') saveSharedState();
+    injectGroupManageControls();
+    alert('グループを削除しました。');
+  };
+
+  setInterval(injectGroupManageControls, 1000);
+})();
+</script>
+
 </body>
 </html>
