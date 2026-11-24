@@ -4014,6 +4014,112 @@
             </div>
             <div style="display:flex; gap:6px;">
               <button type="button" onclick="adminRenameRoom(${idx})" style="flex:1; padding:8px 4px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#0284c7; color:#fff; cursor:pointer; white-space:nowrap;">✏️ 名前変更</button>
+<!-- 管理画面：グループ名変更・履歴リセット・グループ削除 追加機能（管理人コントロール画面専用） -->
+<script>
+(function() {
+  function findAdminControlBody() {
+    if (document.getElementById('joinScreenAdminLoginBtn') && !document.getElementById('joinScreenAdminLoginBtn').closest('.hidden')) {
+      return null;
+    }
+    const candidates = ['adminScreen', 'adminControlScreen', 'adminPanel', 'adminModal', 'adminContainer'];
+    for (const id of candidates) {
+      const el = document.getElementById(id);
+      if (el && !el.classList.contains('hidden') && el.offsetParent !== null) {
+        return el.querySelector('.screen-body') || el;
+      }
+    }
+    const screens = document.querySelectorAll('.full-screen, .modal');
+    for (const el of screens) {
+      if (el.id === 'roomListScreen' || el.id === 'chatScreen' || el.id === 'joinScreen') continue;
+      if (!el.classList.contains('hidden') && el.offsetParent !== null) {
+        const text = el.textContent || '';
+        if (text.includes('管理人専用コントロール') || text.includes('管理人コントロール') || text.includes('ルーム作成・鍵設定')) {
+          return el.querySelector('.screen-body') || el;
+        }
+      }
+    }
+    return null;
+  }
+
+  // Firebase Realtime Database へ確実に反映させる共通ヘルパー
+  async function syncRoomChangeToFirebase(actionType, idx, roomObj) {
+    try {
+      // 1. ローカルストレージにキャッシュがある場合は更新
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.includes('miyachat')) {
+          try {
+            const parsed = JSON.parse(localStorage.getItem(k));
+            if (parsed && Array.isArray(parsed.rooms)) {
+              parsed.rooms = sharedState.rooms;
+              localStorage.setItem(k, JSON.stringify(parsed));
+            }
+          } catch (_) {}
+        }
+      }
+
+      // 2. 既存の保存関数を実行
+      if (typeof saveSharedState === 'function') {
+        await saveSharedState();
+      }
+
+      // 3. Firebase RTDB へ REST API 経由でも直接反映（空配列消去漏れ・SDK仕様差を確実にカバー）
+      const dbUrl = 'https://miyachat-e5fd8-default-rtdb.firebaseio.com';
+      if (actionType === 'reset') {
+        await fetch(`${dbUrl}/miyachat_shared_v1/rooms/${idx}/messages.json`, { method: 'DELETE' });
+      } else if (actionType === 'rename' && roomObj) {
+        await fetch(`${dbUrl}/miyachat_shared_v1/rooms/${idx}/name.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(roomObj.name)
+        });
+      } else if (actionType === 'delete') {
+        await fetch(`${dbUrl}/miyachat_shared_v1/rooms.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(sharedState.rooms)
+        });
+      }
+    } catch (e) {
+      console.error('Sync error:', e);
+    }
+  }
+
+  function injectGroupManageControls() {
+    const container = findAdminControlBody();
+    const existingPanel = document.getElementById('customGroupManagePanel');
+
+    if (!container) {
+      if (existingPanel) existingPanel.remove();
+      return;
+    }
+    if (typeof sharedState === 'undefined' || !Array.isArray(sharedState.rooms)) return;
+
+    let panel = existingPanel;
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'customGroupManagePanel';
+      panel.className = 'card';
+      panel.style.cssText = 'margin: 12px 0 24px; padding: 14px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);';
+      container.appendChild(panel);
+    } else if (panel.parentElement !== container) {
+      container.appendChild(panel);
+    }
+
+    let html = '<div class="card-title" style="font-weight:bold; font-size:14px; color:#0f172a; margin-bottom:10px;">🛠️ グループ管理（名前変更・リセット・削除）</div>';
+    if (sharedState.rooms.length === 0) {
+      html += '<div style="font-size:12px; color:#64748b;">グループがありません</div>';
+    } else {
+      sharedState.rooms.forEach((r, idx) => {
+        const safeName = String(r.name || '名称未設定').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        const msgCount = Array.isArray(r.messages) ? r.messages.length : 0;
+        html += `
+          <div style="border:1px solid #e2e8f0; border-radius:10px; padding:10px; margin-bottom:10px; background:#f8fafc;">
+            <div style="font-weight:bold; font-size:13px; color:#0f172a; margin-bottom:8px;">
+              ${safeName} <span style="font-size:11px; color:#64748b; font-weight:normal;">(履歴: ${msgCount}件)</span>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button type="button" onclick="adminRenameRoom(${idx})" style="flex:1; padding:8px 4px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#0284c7; color:#fff; cursor:pointer; white-space:nowrap;">✏️ 名前変更</button>
               <button type="button" onclick="adminResetRoomMessages(${idx})" style="flex:1; padding:8px 4px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#d97706; color:#fff; cursor:pointer; white-space:nowrap;">🧹 履歴リセット</button>
               <button type="button" onclick="adminDeleteRoom(${idx})" style="flex:1; padding:8px 4px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#dc2626; color:#fff; cursor:pointer; white-space:nowrap;">🗑️ 削除</button>
             </div>
@@ -4024,7 +4130,7 @@
     panel.innerHTML = html;
   }
 
-  window.adminRenameRoom = function(idx) {
+  window.adminRenameRoom = async function(idx) {
     const r = sharedState.rooms[idx];
     if (!r) return;
     const nextName = prompt('新しいグループ名を入力してください：', r.name || '');
@@ -4032,22 +4138,22 @@
     const trimmed = nextName.trim();
     if (!trimmed) { alert('グループ名を入力してください。'); return; }
     r.name = trimmed;
-    if (typeof saveSharedState === 'function') saveSharedState();
+    await syncRoomChangeToFirebase('rename', idx, r);
     injectGroupManageControls();
     alert('グループ名を「' + trimmed + '」に変更しました。');
   };
 
-  window.adminResetRoomMessages = function(idx) {
+  window.adminResetRoomMessages = async function(idx) {
     const r = sharedState.rooms[idx];
     if (!r) return;
     if (!confirm('「' + (r.name || 'このグループ') + '」のトーク履歴をすべてリセットしますか？\n（※メンバーはそのまま残ります）')) return;
     r.messages = [];
-    if (typeof saveSharedState === 'function') saveSharedState();
+    await syncRoomChangeToFirebase('reset', idx, r);
     injectGroupManageControls();
-    alert('トーク履歴をリセットしました。');
+    alert('トーク履歴を完全にリセットしました。');
   };
 
-  window.adminDeleteRoom = function(idx) {
+  window.adminDeleteRoom = async function(idx) {
     const r = sharedState.rooms[idx];
     if (!r) return;
     if (!confirm('本当に「' + (r.name || 'このグループ') + '」を完全に削除しますか？\nこの操作は取り消せません。')) return;
@@ -4055,9 +4161,9 @@
     if (typeof currentRoomId !== 'undefined' && currentRoomId === r.id) {
       currentRoomId = sharedState.rooms[0] ? sharedState.rooms[0].id : null;
     }
-    if (typeof saveSharedState === 'function') saveSharedState();
+    await syncRoomChangeToFirebase('delete', idx, null);
     injectGroupManageControls();
-    alert('グループを削除しました。');
+    alert('グループを完全に削除しました。');
   };
 
   setInterval(injectGroupManageControls, 500);
