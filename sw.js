@@ -1,6 +1,5 @@
-// Firebase Cloud Messaging (FCM) バックグラウンド受信対応 Service Worker
-importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js");
 
 firebase.initializeApp({
   apiKey: "AIzaSyBDVBM72ZS8AVQv3GNF4ddgkPW8Vs15liM",
@@ -14,39 +13,19 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// アプリを閉じている（バックグラウンド）状態のプッシュ通知受信処理
 messaging.onBackgroundMessage((payload) => {
-  const title = (payload.notification && payload.notification.title) || (payload.data && payload.data.title) || 'みやチャット';
-  const body = (payload.notification && payload.notification.body) || (payload.data && payload.data.body) || '新着メッセージが届きました';
-  const roomId = (payload.data && payload.data.roomId) || '';
-
-  return self.registration.showNotification(title, {
+  const title = (payload.notification && payload.notification.title) || (payload.data && payload.data.title) || "みやチャット";
+  const body = (payload.notification && payload.notification.body) || (payload.data && payload.data.body) || "新着メッセージがあります";
+  self.registration.showNotification(title, {
     body: body,
-    icon: './icon.png',
-    badge: './icon.png',
-    tag: 'miyachat-bg-' + Date.now(),
-    renotify: true,
-    vibrate: [200, 100, 200],
-    data: { roomId: roomId }
+    icon: "./icon.png",
+    badge: "./icon.png",
+    tag: "miyachat-" + Date.now(),
+    renotify: true
   });
 });
 
-// 通知バナーをタップしたら該当のトークルームを開く
-self.addEventListener('notificationclick', (event) => {
+self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const roomId = event.notification.data && event.notification.data.roomId;
-  const targetUrl = roomId ? `./index.html?room=${encodeURIComponent(roomId)}` : './index.html';
-
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if ('focus' in client) {
-          return client.focus();
-        }
-      }
-      if (clients.openWindow) {
-        return clients.openWindow(targetUrl);
-      }
-    })
-  );
+  event.waitUntil(clients.openWindow("./"));
 });
