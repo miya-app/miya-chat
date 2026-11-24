@@ -3946,19 +3946,31 @@
     handleSyncedData(null);
   }
 </script>
-<!-- 管理画面：グループ名変更・履歴リセット・グループ削除 追加機能 -->
+<!-- 管理画面：グループ名変更・履歴リセット・グループ削除 追加機能（管理人コントロール画面専用） -->
 <script>
 (function() {
-  function findVisibleAdminContainer() {
-    // 候補IDまたは「管理」「パスコード」等のテキストを含む表示中の全画面コンテナを探索
-    const byId = document.getElementById('adminScreen') || document.getElementById('adminModal') || document.getElementById('adminPanel');
-    if (byId && !byId.classList.contains('hidden') && byId.offsetParent !== null) {
-      return byId.querySelector('.screen-body') || byId;
+  function findAdminControlBody() {
+    // 「管理人専用ログインはこちら」ボタンがある参加画面は絶対に除外する
+    if (document.getElementById('joinScreenAdminLoginBtn') && !document.getElementById('joinScreenAdminLoginBtn').closest('.hidden')) {
+      return null;
     }
-    const screens = document.querySelectorAll('.full-screen, [id*="admin" i], [id*="Admin"]');
+
+    // 管理人専用コントロール画面の候補IDのみを対象にする
+    const candidates = ['adminScreen', 'adminControlScreen', 'adminPanel', 'adminModal', 'adminContainer'];
+    for (const id of candidates) {
+      const el = document.getElementById(id);
+      if (el && !el.classList.contains('hidden') && el.offsetParent !== null) {
+        return el.querySelector('.screen-body') || el;
+      }
+    }
+
+    // ID名が異なる場合でも、全画面モーダル/スクリーンで「管理人専用コントロール」等の見出しを持つものだけに限定
+    const screens = document.querySelectorAll('.full-screen, .modal');
     for (const el of screens) {
+      if (el.id === 'roomListScreen' || el.id === 'chatScreen' || el.id === 'joinScreen') continue;
       if (!el.classList.contains('hidden') && el.offsetParent !== null) {
-        if (el.textContent.includes('管理人') || el.textContent.includes('パスコード') || el.id.toLowerCase().includes('admin')) {
+        const text = el.textContent || '';
+        if (text.includes('管理人専用コントロール') || text.includes('管理人コントロール') || text.includes('ルーム作成・鍵設定')) {
           return el.querySelector('.screen-body') || el;
         }
       }
@@ -3967,16 +3979,22 @@
   }
 
   function injectGroupManageControls() {
-    const container = findVisibleAdminContainer();
-    if (!container) return;
+    const container = findAdminControlBody();
+    const existingPanel = document.getElementById('customGroupManagePanel');
+
+    // 管理人コントロール画面を開いていないときはパネルを消す（他の画面には絶対に出さない）
+    if (!container) {
+      if (existingPanel) existingPanel.remove();
+      return;
+    }
     if (typeof sharedState === 'undefined' || !Array.isArray(sharedState.rooms)) return;
 
-    let panel = document.getElementById('customGroupManagePanel');
+    let panel = existingPanel;
     if (!panel) {
       panel = document.createElement('div');
       panel.id = 'customGroupManagePanel';
       panel.className = 'card';
-      panel.style.cssText = 'margin: 14px 12px 30px; padding: 14px; background: #fff; border-radius: 12px; border: 1px solid #cbd5e1;';
+      panel.style.cssText = 'margin: 12px 0 24px; padding: 14px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);';
       container.appendChild(panel);
     } else if (panel.parentElement !== container) {
       container.appendChild(panel);
@@ -3994,10 +4012,10 @@
             <div style="font-weight:bold; font-size:13px; color:#0f172a; margin-bottom:8px;">
               ${safeName} <span style="font-size:11px; color:#64748b; font-weight:normal;">(履歴: ${msgCount}件)</span>
             </div>
-            <div style="display:flex; flex-wrap:wrap; gap:6px;">
-              <button type="button" onclick="adminRenameRoom(${idx})" style="flex:1; min-width:90px; padding:8px 6px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#0284c7; color:#fff; cursor:pointer;">✏️ 名前変更</button>
-              <button type="button" onclick="adminResetRoomMessages(${idx})" style="flex:1; min-width:90px; padding:8px 6px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#d97706; color:#fff; cursor:pointer;">🧹 履歴リセット</button>
-              <button type="button" onclick="adminDeleteRoom(${idx})" style="flex:1; min-width:80px; padding:8px 6px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#dc2626; color:#fff; cursor:pointer;">🗑️ 削除</button>
+            <div style="display:flex; gap:6px;">
+              <button type="button" onclick="adminRenameRoom(${idx})" style="flex:1; padding:8px 4px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#0284c7; color:#fff; cursor:pointer; white-space:nowrap;">✏️ 名前変更</button>
+              <button type="button" onclick="adminResetRoomMessages(${idx})" style="flex:1; padding:8px 4px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#d97706; color:#fff; cursor:pointer; white-space:nowrap;">🧹 履歴リセット</button>
+              <button type="button" onclick="adminDeleteRoom(${idx})" style="flex:1; padding:8px 4px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#dc2626; color:#fff; cursor:pointer; white-space:nowrap;">🗑️ 削除</button>
             </div>
           </div>
         `;
@@ -4042,7 +4060,7 @@
     alert('グループを削除しました。');
   };
 
-  setInterval(injectGroupManageControls, 800);
+  setInterval(injectGroupManageControls, 500);
 })();
 </script>
 </body>
