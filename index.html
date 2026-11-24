@@ -1613,9 +1613,7 @@
           const sig = `msg_${r.id}_${msgs.length}_${lastM.time}_${lastM.text || lastM.stickerId || lastM.mediaType}`;
           latestSig = sig;
           const isMentionedMe = lastM.text && (lastM.text.includes(`@${currentUser.name}`) || lastM.text.includes('@All'));
-          notifyTitle = isMentionedMe
-            ? `📣 ${lastM.senderName} があなたにメンション！`
-            : `💬 ${lastM.senderName}（${r.showName === false ? 'グループ' : r.name}）`;
+          notifyTitle = '';
           if (lastM.stickerId) {
             const st = CHAT_STICKERS.find(s => s.id === lastM.stickerId);
             notifyBody = `スタンプ「${st ? st.text : ''}」を送信しました`;
