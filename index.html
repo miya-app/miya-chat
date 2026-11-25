@@ -3946,7 +3946,7 @@
     handleSyncedData(null);
   }
 </script>
-<!-- 管理画面：グループ名変更・履歴リセット・グループ削除 追加機能（管理人コントロール画面専用） -->
+;<!-- 管理画面：グループ名変更・履歴リセット・グループ削除 追加機能（管理人コントロール画面専用） -->
 <script>
 (function() {
   function findAdminControlBody() {
@@ -3989,7 +3989,7 @@
     }
     if (typeof sharedState === 'undefined' || !Array.isArray(sharedState.rooms)) return;
 
-    let panel = existingPanel;
+    let panel = existingPanel
     if (!panel) {
       panel = document.createElement('div');
       panel.id = 'customGroupManagePanel';
@@ -4014,9 +4014,81 @@
             </div>
             <div style="display:flex; gap:6px;">
               <button type="button" onclick="adminRenameRoom(${idx})" style="flex:1; padding:8px 4px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#0284c7; color:#fff; cursor:pointer; white-space:nowrap;">✏️ 名前変更</button>
-<!-- 管理画面：グループ名変更・履歴リセット・グループ削除 追加機能（管理人コントロール画面専用） -->
+ 。');
+  };
+
+  window.adminDeleteRoom = async function(idx) {
+    const r = sharedState.rooms[idx];
+    if (!r) return;
+    if (!confirm('本当に「' + (r.name || 'このグループ') + '」を完全に削除しますか？\nこの操作は取り消せません。')) return;
+    sharedState.rooms.splice(idx, 1);
+    if (typeof currentRoomId !== 'undefined' && currentRoomId === r.id) {
+      currentRoomId = sharedState.rooms[0] ? sharedState.rooms[0].id : null;
+    }
+    await syncRoomChangeToFirebase('delete', idx, null);
+    injectGroupManageControls();
+    alert('グループを完全に削除しました。');
+<!-- 管理画面（名前変更・履歴リセット・削除）＆ 起動時グループ一覧直行 統合スクリプト -->
 <script>
 (function() {
+  // ==========================================
+  // 1. 起動時ルーティング（ロゴ → グループ一覧直行）
+  // ==========================================
+  let userManuallyOpenedRoom = false;
+  document.addEventListener('click', (e) => {
+    if (e.target && e.target.closest('#roomListEl')) {
+      userManuallyOpenedRoom = true;
+    }
+  }, true);
+
+  function routeInitialScreen() {
+    try {
+      let hasSavedUser = false;
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.toLowerCase().includes('miyachat')) {
+          const val = localStorage.getItem(k);
+          if (val && val.includes('"id"') && val.includes('"name"')) {
+            hasSavedUser = true;
+            break;
+          }
+        }
+      }
+      if (!hasSavedUser && typeof currentUser !== 'undefined' && currentUser && currentUser.id) {
+        hasSavedUser = true;
+      }
+
+      const joinScreen = document.getElementById('joinScreen');
+      const roomListScreen = document.getElementById('roomListScreen');
+      const chatScreen = document.getElementById('chatScreen');
+      const splash = document.getElementById('splashScreen') || document.querySelector('.splash-screen');
+
+      if (splash && !splash.classList.contains('hidden') && splash.offsetParent !== null) return;
+
+      if (hasSavedUser) {
+        if (joinScreen) joinScreen.classList.add('hidden');
+        if (!userManuallyOpenedRoom) {
+          if (chatScreen && !chatScreen.classList.contains('hidden')) {
+            chatScreen.classList.add('hidden');
+          }
+          if (roomListScreen) {
+            roomListScreen.classList.remove('hidden');
+            if (typeof renderRoomList === 'function') renderRoomList();
+          }
+        }
+      } else {
+        if (joinScreen) joinScreen.classList.remove('hidden');
+      }
+    } catch (_) {}
+  }
+
+  routeInitialScreen();
+  const fastRouteTimer = setInterval(routeInitialScreen, 30);
+  setTimeout(() => clearInterval(fastRouteTimer), 3500);
+
+  // ==========================================
+  // 2. 管理人専用コントロール画面：グループ管理（名前変更・履歴リセット・削除）
+  // ==========================================
   function findAdminControlBody() {
     if (document.getElementById('joinScreenAdminLoginBtn') && !document.getElementById('joinScreenAdminLoginBtn').closest('.hidden')) {
       return null;
@@ -4028,12 +4100,12 @@
         return el.querySelector('.screen-body') || el;
       }
     }
-    const screens = document.querySelectorAll('.full-screen, .modal');
+    const screens = document.querySelectorAll('.full-screen, .modal, [id*="admin" i]');
     for (const el of screens) {
       if (el.id === 'roomListScreen' || el.id === 'chatScreen' || el.id === 'joinScreen') continue;
       if (!el.classList.contains('hidden') && el.offsetParent !== null) {
         const text = el.textContent || '';
-        if (text.includes('管理人専用コントロール') || text.includes('管理人コントロール') || text.includes('ルーム作成・鍵設定')) {
+        if (text.includes('管理人専用コントロール') || text.includes('管理人コントロール') || text.includes('ルーム作成') || text.includes('パスコード')) {
           return el.querySelector('.screen-body') || el;
         }
       }
@@ -4041,10 +4113,8 @@
     return null;
   }
 
-  // Firebase Realtime Database へ確実に反映させる共通ヘルパー
   async function syncRoomChangeToFirebase(actionType, idx, roomObj) {
     try {
-      // 1. ローカルストレージにキャッシュがある場合は更新
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
         if (k && k.includes('miyachat')) {
@@ -4057,13 +4127,9 @@
           } catch (_) {}
         }
       }
-
-      // 2. 既存の保存関数を実行
       if (typeof saveSharedState === 'function') {
         await saveSharedState();
       }
-
-      // 3. Firebase RTDB へ REST API 経由でも直接反映（空配列消去漏れ・SDK仕様差を確実にカバー）
       const dbUrl = 'https://miyachat-e5fd8-default-rtdb.firebaseio.com';
       if (actionType === 'reset') {
         await fetch(`${dbUrl}/miyachat_shared_v1/rooms/${idx}/messages.json`, { method: 'DELETE' });
@@ -4167,47 +4233,6 @@
   };
 
   setInterval(injectGroupManageControls, 500);
-    // ログイン済みならグループ一覧を直接表示、未ログインの人だけ参加設定画面を表示
-  function routeInitialScreen() {
-    try {
-      let hasSavedUser = false;
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.toLowerCase().includes('miyachat')) {
-          const val = localStorage.getItem(k);
-          if (val && val.includes('"id"') && val.includes('"name"')) {
-            hasSavedUser = true;
-            break;
-          }
-        }
-      }
-      if (!hasSavedUser && typeof currentUser !== 'undefined' && currentUser && currentUser.id) {
-        hasSavedUser = true;
-      }
-
-      const joinScreen = document.getElementById('joinScreen');
-      const roomListScreen = document.getElementById('roomListScreen');
-      const chatScreen = document.getElementById('chatScreen');
-      const splash = document.getElementById('splashScreen') || document.querySelector('.splash-screen');
-
-      // ロゴ表示中は待機
-      if (splash && !splash.classList.contains('hidden') && splash.offsetParent !== null) return;
-
-      if (hasSavedUser) {
-        if (joinScreen) joinScreen.classList.add('hidden');
-        if (roomListScreen && (!chatScreen || chatScreen.classList.contains('hidden'))) {
-          roomListScreen.classList.remove('hidden');
-        }
-      } else {
-        // 初回（未ログイン）の人だけ参加設定画面を表示
-        if (joinScreen) joinScreen.classList.remove('hidden');
-      }
-    } catch (_) {}
-  }
-
-  routeInitialScreen();
-  const fastRouteTimer = setInterval(routeInitialScreen, 30);
-  setTimeout(() => clearInterval(fastRouteTimer), 4000);
 })();
 </script>
 </body>
