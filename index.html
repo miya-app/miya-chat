@@ -4167,6 +4167,46 @@
   };
 
   setInterval(injectGroupManageControls, 500);
+  // ログイン済みユーザーは参加（ログイン）画面をスキップして直接グループ一覧へ遷移
+  function skipLoginScreenIfLoggedIn() {
+    try {
+      let hasSavedUser = false;
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.includes('miyachat') && (k.includes('user') || k.includes('User') || k.includes('profile'))) {
+          const val = localStorage.getItem(k);
+          if (val && val !== 'null' && val !== '{}') {
+            hasSavedUser = true;
+            break;
+          }
+        }
+      }
+      if (!hasSavedUser && typeof currentUser !== 'undefined' && currentUser && currentUser.id) {
+        hasSavedUser = true;
+      }
+      if (!hasSavedUser) return;
+
+      const joinScreen = document.getElementById('joinScreen');
+      const roomListScreen = document.getElementById('roomListScreen');
+      const chatScreen = document.getElementById('chatScreen');
+      const splash = document.getElementById('splashScreen') || document.querySelector('.splash-screen');
+
+      // ロゴ（スプラッシュ）表示中は何もしない
+      if (splash && !splash.classList.contains('hidden') && splash.offsetParent !== null) return;
+
+      // ログイン画面が表示されていたら即座に隠してグループ一覧を出す
+      if (joinScreen && !joinScreen.classList.contains('hidden')) {
+        joinScreen.classList.add('hidden');
+        if (roomListScreen && (!chatScreen || chatScreen.classList.contains('hidden'))) {
+          roomListScreen.classList.remove('hidden');
+        }
+      }
+    } catch (_) {}
+  }
+
+  // 起動直後のログイン画面チラつきを防ぐため高頻度でチェック（起動後5秒間）
+  const fastSkipTimer = setInterval(skipLoginScreenIfLoggedIn, 50);
+  setTimeout(() => clearInterval(fastSkipTimer), 5000);
 })();
 </script>
 </body>
