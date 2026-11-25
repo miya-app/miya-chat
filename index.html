@@ -582,7 +582,7 @@
   </div>
 
   <!-- 1. 初回入室・プロフィール＆パスコード入力＆管理人専用ログイン画面 -->
-  <div class="full-screen" id="joinScreen" style="justify-content:flex-start; padding:14px 18px; text-align:center; overflow-y:auto;">
+  <div class="full-screen hidden" id="joinScreen" style="justify-content:flex-start; padding:14px 18px;">
     <div style="font-size: 18px; font-weight: bold; color: #0f172a; margin-bottom: 2px;">みやチャット参加設定</div>
     <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;" id="joinRoomNotice">
       プロフィールとパスコードを入力して参加してください
@@ -4167,15 +4167,15 @@
   };
 
   setInterval(injectGroupManageControls, 500);
-  // ログイン済みユーザーは参加（ログイン）画面をスキップして直接グループ一覧へ遷移
-  function skipLoginScreenIfLoggedIn() {
+    // ログイン済みならグループ一覧を直接表示、未ログインの人だけ参加設定画面を表示
+  function routeInitialScreen() {
     try {
       let hasSavedUser = false;
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && k.includes('miyachat') && (k.includes('user') || k.includes('User') || k.includes('profile'))) {
+        if (k && k.toLowerCase().includes('miyachat')) {
           const val = localStorage.getItem(k);
-          if (val && val !== 'null' && val !== '{}') {
+          if (val && val.includes('"id"') && val.includes('"name"')) {
             hasSavedUser = true;
             break;
           }
@@ -4184,29 +4184,30 @@
       if (!hasSavedUser && typeof currentUser !== 'undefined' && currentUser && currentUser.id) {
         hasSavedUser = true;
       }
-      if (!hasSavedUser) return;
 
       const joinScreen = document.getElementById('joinScreen');
       const roomListScreen = document.getElementById('roomListScreen');
       const chatScreen = document.getElementById('chatScreen');
       const splash = document.getElementById('splashScreen') || document.querySelector('.splash-screen');
 
-      // ロゴ（スプラッシュ）表示中は何もしない
+      // ロゴ表示中は待機
       if (splash && !splash.classList.contains('hidden') && splash.offsetParent !== null) return;
 
-      // ログイン画面が表示されていたら即座に隠してグループ一覧を出す
-      if (joinScreen && !joinScreen.classList.contains('hidden')) {
-        joinScreen.classList.add('hidden');
+      if (hasSavedUser) {
+        if (joinScreen) joinScreen.classList.add('hidden');
         if (roomListScreen && (!chatScreen || chatScreen.classList.contains('hidden'))) {
           roomListScreen.classList.remove('hidden');
         }
+      } else {
+        // 初回（未ログイン）の人だけ参加設定画面を表示
+        if (joinScreen) joinScreen.classList.remove('hidden');
       }
     } catch (_) {}
   }
 
-  // 起動直後のログイン画面チラつきを防ぐため高頻度でチェック（起動後5秒間）
-  const fastSkipTimer = setInterval(skipLoginScreenIfLoggedIn, 50);
-  setTimeout(() => clearInterval(fastSkipTimer), 5000);
+  routeInitialScreen();
+  const fastRouteTimer = setInterval(routeInitialScreen, 30);
+  setTimeout(() => clearInterval(fastRouteTimer), 4000);
 })();
 </script>
 </body>
