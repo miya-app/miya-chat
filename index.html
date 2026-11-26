@@ -844,7 +844,11 @@
       <div class="card">
         <div class="card-title">☁️ Firebaseリアルタイム同期＆FCM通知ステータス</div>
         <div id="firebaseSyncStatus" style="font-size:12px; color:#047857; font-weight:bold;">接続確認中...</div>
+      </div>      <div class="card" id="customGroupManageCard">
+        <div class="card-title" style="font-weight:bold; font-size:14px; color:#0f172a; margin-bottom:10px;">🛠️ グループ管理（名前変更・リセット・削除）</div>
+        <div id="customGroupManageList"></div>
       </div>
+
     </div>
   </div>
 
@@ -4168,23 +4172,7 @@
   // ==========================================
   // 2. 管理人専用コントロール画面：グループ管理（名前変更・履歴リセット・削除）
   // ==========================================
-   function findAdminControlBody() {
-    // 画面内のテキストノードから「⚙️ 管理人専用コントロール画面」ヘッダーを直接見つける
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
-    let node;
-    while ((node = walker.nextNode())) {
-      if (node.nodeValue && node.nodeValue.includes('管理人専用コントロール画面')) {
-        const headerEl = node.parentElement;
-        if (!headerEl || headerEl.offsetParent === null) continue;
-        // ヘッダーの親（画面全体）から .screen-body または最後のカードの親要素を取得
-        const screenRoot = headerEl.closest('.full-screen, .modal-overlay, .modal, div[id]');
-        if (screenRoot && !screenRoot.classList.contains('hidden')) {
-          return screenRoot.querySelector('.screen-body') || screenRoot.lastElementChild || screenRoot;
-        }
-      }
-    }
-    return null;
-  }
+   
 
 
   async function syncRoomChangeToFirebase(actionType, idx, roomObj) {
@@ -4225,50 +4213,35 @@
     }
   }
 
-  function injectGroupManageControls() {
-    const container = findAdminControlBody();
-    const existingPanel = document.getElementById('customGroupManagePanel');
+    function injectGroupManageControls() {
+    const listEl = document.getElementById('customGroupManageList');
+    if (!listEl || typeof sharedState === 'undefined' || !Array.isArray(sharedState.rooms)) return;
 
-    if (!container) {
-      if (existingPanel) existingPanel.remove();
+    if (sharedState.rooms.length === 0) {
+      listEl.innerHTML = '<div style="font-size:12px; color:#64748b;">グループがありません</div>';
       return;
     }
-    if (typeof sharedState === 'undefined' || !Array.isArray(sharedState.rooms)) return;
 
-    let panel = existingPanel;
-    if (!panel) {
-      panel = document.createElement('div');
-      panel.id = 'customGroupManagePanel';
-      panel.className = 'card';
-      panel.style.cssText = 'margin: 12px 0 24px; padding: 14px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);';
-      container.appendChild(panel);
-    } else if (panel.parentElement !== container) {
-      container.appendChild(panel);
-    }
-
-    let html = '<div class="card-title" style="font-weight:bold; font-size:14px; color:#0f172a; margin-bottom:10px;">🛠️ グループ管理（名前変更・リセット・削除）</div>';
-    if (sharedState.rooms.length === 0) {
-      html += '<div style="font-size:12px; color:#64748b;">グループがありません</div>';
-    } else {
-      sharedState.rooms.forEach((r, idx) => {
-        const safeName = String(r.name || '名称未設定').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        const msgCount = Array.isArray(r.messages) ? r.messages.length : 0;
-        html += `
-          <div style="border:1px solid #e2e8f0; border-radius:10px; padding:10px; margin-bottom:10px; background:#f8fafc;">
-            <div style="font-weight:bold; font-size:13px; color:#0f172a; margin-bottom:8px;">
-              ${safeName} <span style="font-size:11px; color:#64748b; font-weight:normal;">(履歴: ${msgCount}件)</span>
-            </div>
-            <div style="display:flex; gap:6px;">
-              <button type="button" onclick="adminRenameRoom(${idx})" style="flex:1; padding:8px 4px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#0284c7; color:#fff; cursor:pointer; white-space:nowrap;">✏️ 名前変更</button>
-              <button type="button" onclick="adminResetRoomMessages(${idx})" style="flex:1; padding:8px 4px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#d97706; color:#fff; cursor:pointer; white-space:nowrap;">🧹 履歴リセット</button>
-              <button type="button" onclick="adminDeleteRoom(${idx})" style="flex:1; padding:8px 4px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#dc2626; color:#fff; cursor:pointer; white-space:nowrap;">🗑️ 削除</button>
-            </div>
+    let html = '';
+    sharedState.rooms.forEach((r, idx) => {
+      const safeName = String(r.name || '名称未設定').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      const msgCount = Array.isArray(r.messages) ? r.messages.length : 0;
+      html += `
+        <div style="border:1px solid #e2e8f0; border-radius:10px; padding:10px; margin-bottom:10px; background:#f8fafc;">
+          <div style="font-weight:bold; font-size:13px; color:#0f172a; margin-bottom:8px;">
+            ${safeName} <span style="font-size:11px; color:#64748b; font-weight:normal;">(履歴: ${msgCount}件)</span>
           </div>
-        `;
-      });
-    }
-    panel.innerHTML = html;
+          <div style="display:flex; gap:6px;">
+            <button type="button" onclick="adminRenameRoom(${idx})" style="flex:1; padding:8px 4px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#0284c7; color:#fff; cursor:pointer; white-space:nowrap;">✏️ 名前変更</button>
+            <button type="button" onclick="adminResetRoomMessages(${idx})" style="flex:1; padding:8px 4px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#d97706; color:#fff; cursor:pointer; white-space:nowrap;">🧹 履歴リセット</button>
+            <button type="button" onclick="adminDeleteRoom(${idx})" style="flex:1; padding:8px 4px; font-size:12px; font-weight:bold; border:none; border-radius:6px; background:#dc2626; color:#fff; cursor:pointer; white-space:nowrap;">🗑️ 削除</button>
+          </div>
+        </div>
+      `;
+    });
+    listEl.innerHTML = html;
   }
+
 
   window.adminRenameRoom = async function(idx) {
     const r = sharedState.rooms[idx];
