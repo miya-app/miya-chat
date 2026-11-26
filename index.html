@@ -4168,30 +4168,24 @@
   // ==========================================
   // 2. 管理人専用コントロール画面：グループ管理（名前変更・履歴リセット・削除）
   // ==========================================
-  function findAdminControlBody() {
-    if (document.getElementById('joinScreenAdminLoginBtn') && !document.getElementById('joinScreenAdminLoginBtn').closest('.hidden')) {
-      return null;
-    }
-    const candidates = ['adminScreen', 'adminControlScreen', 'adminPanel', 'adminModal', 'adminContainer'];
-    for (const id of candidates) {
-      const el = document.getElementById(id);
-      if (el && !el.classList.contains('hidden') && el.offsetParent !== null) {
-        return el.querySelector('.screen-body') || el;
-      }
-    }
-        const screens = document.querySelectorAll('.full-screen, .modal-overlay, .modal, [id*="admin" i]');
-    for (const el of screens) {
-      if (el.id === 'roomListScreen' || el.id === 'chatScreen' || el.id === 'joinScreen') continue;
-      if (!el.classList.contains('hidden') && el.offsetParent !== null) {
-        const text = el.textContent || '';
-        if (text.includes('管理人専用コントロール') || text.includes('管理人コントロール') || text.includes('ルーム作成') || text.includes('パスコード')) {
-          return el.querySelector('.screen-body') || el.querySelector('.modal-box') || el;
+   function findAdminControlBody() {
+    // 画面内のテキストノードから「⚙️ 管理人専用コントロール画面」ヘッダーを直接見つける
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+    let node;
+    while ((node = walker.nextNode())) {
+      if (node.nodeValue && node.nodeValue.includes('管理人専用コントロール画面')) {
+        const headerEl = node.parentElement;
+        if (!headerEl || headerEl.offsetParent === null) continue;
+        // ヘッダーの親（画面全体）から .screen-body または最後のカードの親要素を取得
+        const screenRoot = headerEl.closest('.full-screen, .modal-overlay, .modal, div[id]');
+        if (screenRoot && !screenRoot.classList.contains('hidden')) {
+          return screenRoot.querySelector('.screen-body') || screenRoot.lastElementChild || screenRoot;
         }
       }
     }
-    }
     return null;
   }
+
 
   async function syncRoomChangeToFirebase(actionType, idx, roomObj) {
     try {
