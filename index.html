@@ -4136,38 +4136,7 @@
 
       const joinScreen = document.getElementById('joinScreen');
       const roomListScreen = document.getElementById('roomListScreen');
-      const splash = document.getElementById('splashScreen') || document.querySelector('.splash-screen');
 
-      if (splash && !splash.classList.contains('hidden') && splash.offsetParent !== null) {
-        if (hasSavedUser) setMainChatElementsVisible(false);
-        return;
-      }
-
-      if (hasSavedUser) {
-        if (joinScreen) joinScreen.classList.add('hidden');
-
-        if (!userManuallyOpenedRoom) {
-          if (typeof isViewingRoomList !== 'undefined') isViewingRoomList = true;
-          setMainChatElementsVisible(false);
-          if (roomListScreen && roomListScreen.classList.contains('hidden')) {
-            roomListScreen.classList.remove('hidden');
-            if (typeof renderRoomList === 'function') renderRoomList();
-          }
-        } else {
-          if (roomListScreen && roomListScreen.classList.contains('hidden')) {
-            setMainChatElementsVisible(true);
-          } else {
-            setMainChatElementsVisible(false);
-          }
-        }
-      } else {
-        if (joinScreen) joinScreen.classList.remove('hidden');
-      }
-    } catch (_) {}
-  }
-
-  routeInitialScreen();
-  setInterval(routeInitialScreen, 50);
 
   // ==========================================
   // 2. 管理人専用コントロール画面：グループ管理（名前変更・履歴リセット・削除）
