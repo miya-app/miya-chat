@@ -4179,15 +4179,16 @@
         return el.querySelector('.screen-body') || el;
       }
     }
-    const screens = document.querySelectorAll('.full-screen, .modal, [id*="admin" i]');
+        const screens = document.querySelectorAll('.full-screen, .modal-overlay, .modal, [id*="admin" i]');
     for (const el of screens) {
       if (el.id === 'roomListScreen' || el.id === 'chatScreen' || el.id === 'joinScreen') continue;
       if (!el.classList.contains('hidden') && el.offsetParent !== null) {
         const text = el.textContent || '';
         if (text.includes('管理人専用コントロール') || text.includes('管理人コントロール') || text.includes('ルーム作成') || text.includes('パスコード')) {
-          return el.querySelector('.screen-body') || el;
+          return el.querySelector('.screen-body') || el.querySelector('.modal-box') || el;
         }
       }
+    }
     }
     return null;
   }
