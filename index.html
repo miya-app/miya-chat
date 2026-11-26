@@ -4083,6 +4083,62 @@
         return;
       }
 
+
+
+  <!-- 管理画面（名前変更・履歴リセット・削除）＆ 起動時グループ一覧直行 完全統合スクリプト -->
+<script>
+(function() {
+  // ==========================================
+  // 1. 起動時ルーティング ＆ トーク画面・一覧画面の自動連動（レイアウト非破壊版）
+  // ==========================================
+  let userManuallyOpenedRoom = false;
+
+  function setMainChatElementsVisible(visible) {
+    const selectors = ['.header', '.nav-tabs', '.tab-pane', '.input-bar', '.input-area', '#tab-talk', '#tab-note', '#tab-event'];
+    selectors.forEach(sel => {
+      document.querySelectorAll('body > ' + sel).forEach(el => {
+        el.style.display = visible ? '' : 'none';
+      });
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    const t = e.target;
+    if (!t) return;
+    if (t.closest('#roomListEl') || t.closest('.line-room-row')) {
+      userManuallyOpenedRoom = true;
+      const roomListScreen = document.getElementById('roomListScreen');
+      if (roomListScreen) roomListScreen.classList.add('hidden');
+      setMainChatElementsVisible(true);
+    }
+  }, true);
+
+  function routeInitialScreen() {
+    try {
+      let hasSavedUser = false;
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.toLowerCase().includes('miyachat')) {
+          const val = localStorage.getItem(k);
+          if (val && val.includes('"id"') && val.includes('"name"')) {
+            hasSavedUser = true;
+            break;
+          }
+        }
+      }
+      if (!hasSavedUser && typeof currentUser !== 'undefined' && currentUser && currentUser.id) {
+        hasSavedUser = true;
+      }
+
+      const joinScreen = document.getElementById('joinScreen');
+      const roomListScreen = document.getElementById('roomListScreen');
+      const splash = document.getElementById('splashScreen') || document.querySelector('.splash-screen');
+
+      if (splash && !splash.classList.contains('hidden') && splash.offsetParent !== null) {
+        if (hasSavedUser) setMainChatElementsVisible(false);
+        return;
+      }
+
       if (hasSavedUser) {
         if (joinScreen) joinScreen.classList.add('hidden');
 
