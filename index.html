@@ -4031,12 +4031,16 @@
 <!-- 管理画面（名前変更・履歴リセット・削除）＆ 起動時グループ一覧直行 統合スクリプト -->
 <script>
 (function() {
-  // ==========================================
-  // 1. 起動時ルーティング（ロゴ → グループ一覧直行）
+    // ==========================================
+  // 1. 起動時ルーティング（ロゴ → グループ一覧直行・雑談自動オープン完全ブロック）
   // ==========================================
   let userManuallyOpenedRoom = false;
+
+  // ユーザーが「トーク一覧」の行を自分でタップした瞬間だけロックを解除
   document.addEventListener('click', (e) => {
-    if (e.target && e.target.closest('#roomListEl')) {
+    const t = e.target;
+    if (!t) return;
+    if (t.closest('#roomListEl') || t.closest('.line-room-row')) {
       userManuallyOpenedRoom = true;
     }
   }, true);
@@ -4060,18 +4064,23 @@
 
       const joinScreen = document.getElementById('joinScreen');
       const roomListScreen = document.getElementById('roomListScreen');
-      const chatScreen = document.getElementById('chatScreen');
+      // ID名が何であっても、中に #chatArea を持つ親の .full-screen を自動検出
+      const chatArea = document.getElementById('chatArea');
+      const chatScreen = chatArea ? chatArea.closest('.full-screen') : document.getElementById('chatScreen');
       const splash = document.getElementById('splashScreen') || document.querySelector('.splash-screen');
 
       if (splash && !splash.classList.contains('hidden') && splash.offsetParent !== null) return;
 
       if (hasSavedUser) {
         if (joinScreen) joinScreen.classList.add('hidden');
+
+        // ユーザーが一覧からグループをタップするまでは、強制的にグループ一覧を表示し続ける
         if (!userManuallyOpenedRoom) {
+          if (typeof isViewingRoomList !== 'undefined') isViewingRoomList = true;
           if (chatScreen && !chatScreen.classList.contains('hidden')) {
             chatScreen.classList.add('hidden');
           }
-          if (roomListScreen) {
+          if (roomListScreen && roomListScreen.classList.contains('hidden')) {
             roomListScreen.classList.remove('hidden');
             if (typeof renderRoomList === 'function') renderRoomList();
           }
@@ -4083,9 +4092,7 @@
   }
 
   routeInitialScreen();
-  const fastRouteTimer = setInterval(routeInitialScreen, 30);
-  setTimeout(() => clearInterval(fastRouteTimer), 3500);
-
+  setInterval(routeInitialScreen, 50);
   // ==========================================
   // 2. 管理人専用コントロール画面：グループ管理（名前変更・履歴リセット・削除）
   // ==========================================
