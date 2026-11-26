@@ -915,7 +915,7 @@
     </div>
   </div>
 
-  <div class="full-screen hidden" id="chatScreen">
+  
   <!-- メインヘッダー（トークルーム内のヘッダー） -->
   <div class="header">
     <div class="header-left">
@@ -1058,7 +1058,7 @@
     </div>
   </div>
 </div>
-</div>
+
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBDVBM72ZS8AVQv3GNF4ddgkPW8Vs15liM",
@@ -4032,21 +4032,28 @@
 <!-- 管理画面（名前変更・履歴リセット・削除）＆ 起動時グループ一覧直行 統合スクリプト -->
 <script>
 (function() {
-     // ==========================================
-  // 1. 起動時ルーティング ＆ トーク画面・一覧画面の自動連動
+  // ==========================================
+  // 1. 起動時ルーティング ＆ トーク画面・一覧画面の自動連動（レイアウト非破壊版）
   // ==========================================
   let userManuallyOpenedRoom = false;
 
-  // ユーザーが「トーク一覧」の行をタップしたら即座にトーク画面を表示
+  function setMainChatElementsVisible(visible) {
+    const selectors = ['.header', '.nav-tabs', '.tab-pane', '.input-bar', '.input-area', '#tab-talk', '#tab-note', '#tab-event'];
+    selectors.forEach(sel => {
+      document.querySelectorAll('body > ' + sel).forEach(el => {
+        el.style.display = visible ? '' : 'none';
+      });
+    });
+  }
+
   document.addEventListener('click', (e) => {
     const t = e.target;
     if (!t) return;
     if (t.closest('#roomListEl') || t.closest('.line-room-row')) {
       userManuallyOpenedRoom = true;
       const roomListScreen = document.getElementById('roomListScreen');
-      const chatScreen = document.getElementById('chatScreen');
       if (roomListScreen) roomListScreen.classList.add('hidden');
-      if (chatScreen) chatScreen.classList.remove('hidden');
+      setMainChatElementsVisible(true);
     }
   }, true);
 
@@ -4069,29 +4076,28 @@
 
       const joinScreen = document.getElementById('joinScreen');
       const roomListScreen = document.getElementById('roomListScreen');
-      const chatScreen = document.getElementById('chatScreen');
       const splash = document.getElementById('splashScreen') || document.querySelector('.splash-screen');
 
-      if (splash && !splash.classList.contains('hidden') && splash.offsetParent !== null) return;
+      if (splash && !splash.classList.contains('hidden') && splash.offsetParent !== null) {
+        if (hasSavedUser) setMainChatElementsVisible(false);
+        return;
+      }
 
       if (hasSavedUser) {
         if (joinScreen) joinScreen.classList.add('hidden');
 
         if (!userManuallyOpenedRoom) {
           if (typeof isViewingRoomList !== 'undefined') isViewingRoomList = true;
-          if (chatScreen) chatScreen.classList.add('hidden');
+          setMainChatElementsVisible(false);
           if (roomListScreen && roomListScreen.classList.contains('hidden')) {
             roomListScreen.classList.remove('hidden');
             if (typeof renderRoomList === 'function') renderRoomList();
           }
         } else {
-          // グループ選択後は「一覧画面のhidden状態」と「チャット画面の表示状態」を完全に同期
-          if (roomListScreen && chatScreen) {
-            if (roomListScreen.classList.contains('hidden')) {
-              chatScreen.classList.remove('hidden');
-            } else {
-              chatScreen.classList.add('hidden');
-            }
+          if (roomListScreen && roomListScreen.classList.contains('hidden')) {
+            setMainChatElementsVisible(true);
+          } else {
+            setMainChatElementsVisible(false);
           }
         }
       } else {
